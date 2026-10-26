@@ -58,12 +58,12 @@ export function YouTubeOptions({ options, onChange }: Props) {
         <Hint>Déclaration obligatoire pour YouTube.</Hint>
       </div>
       <label className="flex items-start gap-2 text-sm">
-        <input type="checkbox" checked={options.containsSyntheticMedia === true} onChange={(e) => set("containsSyntheticMedia", e.target.checked)} className="mt-1 accent-[var(--accent-strong)]" />
+        <input type="checkbox" name="yt-synthetic" checked={options.containsSyntheticMedia === true} onChange={(e) => set("containsSyntheticMedia", e.target.checked)} className="mt-1 accent-[var(--accent-strong)]" />
         Contenu réaliste modifié ou généré (divulgation YouTube)
       </label>
       {privacy === "public" && (
         <label className="flex items-start gap-2 text-sm">
-          <input type="checkbox" checked={options.nativeScheduling !== false} onChange={(e) => set("nativeScheduling", e.target.checked)} className="mt-1 accent-[var(--accent-strong)]" />
+          <input type="checkbox" name="yt-native" checked={options.nativeScheduling !== false} onChange={(e) => set("nativeScheduling", e.target.checked)} className="mt-1 accent-[var(--accent-strong)]" />
           <span>
             Programmation native : la vidéo est envoyée dès la programmation (en privé) et YouTube la rend publique à l&apos;heure prévue, même si
             l&apos;ordinateur est éteint.

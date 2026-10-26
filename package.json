@@ -15,7 +15,9 @@
     "db:generate": "pnpm --filter @app/db generate",
     "db:migrate": "pnpm --filter @app/db migrate:dev",
     "db:deploy": "pnpm --filter @app/db migrate:deploy",
-    "admin:bootstrap": "pnpm --filter @app/core admin:bootstrap"
+    "admin:bootstrap": "pnpm --filter @app/core admin:bootstrap",
+    "admin:reset": "pnpm --filter @app/core admin:reset",
+    "e2e": "playwright test"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",

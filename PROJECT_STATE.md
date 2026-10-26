@@ -4,10 +4,10 @@
 
 ## Snapshot
 
-- **Phase courante** : 4 — Implémentation (Inc-5 terminé ; tests réels en attente des identifiants ; Inc-6 à démarrer)
+- **Phase courante** : 7 — Livraison v0.6.0 (Inc-6 terminé) ; écart restant : modèles de workflow (§6)
 - **Dernière mise à jour** : 2026-10-26
 - **Santé** : 🟢 OK
-- **Prochaine action** : Incrément 6 — vérification complète (revue de code et sécurité, CI, E2E), sauvegarde/restauration, migration VPS, bilan final
+- **Prochaine action** : au choix de l'utilisateur — modèles de workflow (§3/§6), premiers envois réels par réseau (M10, M11-M14)
 
 ## Avancement par phase
 
@@ -18,9 +18,9 @@
 | 2 — Planification           | ⬜ à faire | |
 | 3 — Architecture & design   | ✅ fait | ADR-001 à 014 |
 | 4 — Implémentation          | ✅ fait (contrat) | Inc-1 à Inc-5 ✅ ; connecteurs réels non testés contre les vraies API |
-| 5 — Qualité                 | ⬜ à faire | |
-| 6 — Mise en production      | ⬜ à faire | |
-| 7 — Documentation           | ⬜ à faire | |
+| 5 — Qualité                 | ✅ fait | 170 tests Vitest + 2 E2E, audit des dépendances, revue sécurité |
+| 6 — Mise en production      | ✅ local / ⏸️ VPS | Guide VPS prêt ; CI prête (dépôt distant à créer) |
+| 7 — Documentation           | ✅ fait | README, bilan, exploitation, connecteurs, MCP, CHANGELOG |
 | 8 — Maintenance             | ⬜ à faire | |
 
 ## Backlog incréments
@@ -32,7 +32,8 @@
 | Inc-3 | Serveur MCP + jetons + autorisations | §8, §9 | P0 | ✅ |
 | Inc-4 | Premier connecteur réel (OAuth) : YouTube | §5 | P1 | ✅ tests de contrat ; ⏸️ test réel (identifiants) |
 | Inc-5 | Autres connecteurs + TikTok manuel | §5 | P1 | ✅ tests de contrat ; ⏸️ tests réels (identifiants) |
-| Inc-6 | Vérification complète + documentation | §1, §10, §11 | P0 | ⬜ |
+| Inc-6 | Vérification complète + documentation | §1, §10, §11 | P0 | ✅ |
+| Inc-7 | Modèles de workflow enregistrables (comptes, formats, fuseau, mode de validation) | §3, §6 | P1 | ⬜ non fait |
 
 ## Décisions ouvertes / questions à l'utilisateur
 
@@ -48,6 +49,10 @@
 - voir `docs/manual-tasks.md`
 
 ## Journal de session
+
+- 2026-10-26 — Publication réelle YouTube réussie par l'utilisateur (PROCESSING → PUBLISHED, 1 tentative). Demande : Facebook (hors INTAKE) — question posée avant tout développement.
+
+- 2026-10-26 — Inc-5 commité (`cfbcf0b`). Inc-6 sur `feat/inc-6-verification` (non commité) : revue sécurité (audit dépendances OK, aucun TODO/secret), CSP de production, contrôle d'origine robuste, E2E Playwright (2/2 sur le stack Docker), CI GitHub Actions (non exécutée : pas de dépôt distant), sauvegarde + restauration à blanc vérifiées, `admin:reset`, message clair sur les médias refusés, docs (README, exploitation/VPS, bilan, CHANGELOG). Constats : connexion OAuth YouTube réelle réussie par l'utilisateur (PKCE accepté) ; `ADMIN_EMAIL`/`ADMIN_INITIAL_PASSWORD` modifiés dans `.env` sans effet (M15) ; écart INTAKE identifié : modèles de workflow (§3/§6) non implémentés.
 
 - 2026-10-26 — Inc-4 commité (`f28d194`). Inc-5 livré sur `feat/inc-5-connecteurs` (non commité) : docs Instagram/LinkedIn/X/TikTok vérifiées, URLs HTTPS signées pour les médias, connecteurs Instagram (conteneurs, carrousel, Reels), LinkedIn (profil + pages, images, vidéos multipart, texte « little »), X (OAuth PKCE, upload v2, crédits, limites), TikTok manuel (export + adaptateur), options LinkedIn/Instagram dans l'éditeur, page Comptes. Vérifié : 167 tests dont 20 de contrat (faux serveurs) ; Docker 5 services healthy ; UI Comptes (5 réseaux, états réels) ; export TikTok (texte, téléchargement en pièce jointe, marquage) ; route publique : 403 sans signature. Non vérifié : vraies API (identifiants, URL publique, crédits X).
 

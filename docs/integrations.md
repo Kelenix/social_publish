@@ -57,11 +57,11 @@ Faits relevés à cette date :
 
 Choix et limites du connecteur :
 - PKCE (S256) est envoyé en plus du secret client ; la page « web server » ne le documente pas
-  explicitement : **à confirmer lors de la première connexion réelle**.
+  explicitement. **Confirmé le 2026-10-26** : la connexion réelle d'une chaîne a réussi (code échangé,
+  `channels.list` lu, deux portées accordées).
 - Portée `youtube.force-ssl` demandée pour lire l'état des vidéos et annuler une programmation
   native (voir ADR-013).
-- Non testé contre la vraie API à ce stade : vérifié par des tests de contrat (faux serveur
-  reproduisant les échanges documentés).
+- Vraie API (26/10) : connexion OAuth, lecture de la chaîne et **publication d'une vidéo** vérifiées (upload reprenable, suivi jusqu'à « processed »). Non encore essayés en réel : programmation native (`publishAt`) et annulation.
 
 ## Instagram — vérifié le 2026-10-26
 
@@ -136,7 +136,7 @@ Source : https://developers.tiktok.com/doc/content-posting-api-get-started
 
 | Plateforme | État | Incrément |
 |------------|------|-----------|
-| YouTube | Implémenté ; test réel en attente de tes identifiants | 4 |
+| YouTube | Implémenté ; publication réelle vérifiée le 26/10 | 4 |
 | Instagram | Implémenté ; test réel en attente (identifiants + URL publique) | 5 |
 | LinkedIn | Implémenté ; test réel en attente (identifiants) | 5 |
 | X | Implémenté ; test réel en attente (identifiants + crédits) | 5 |

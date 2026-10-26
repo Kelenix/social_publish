@@ -28,6 +28,7 @@
   },
   "scripts": {
     "admin:bootstrap": "tsx scripts/bootstrap-admin.ts",
+    "admin:reset": "tsx scripts/reset-admin.ts",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {

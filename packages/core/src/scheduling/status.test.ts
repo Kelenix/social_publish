@@ -64,6 +64,13 @@ describe("validateContent", () => {
     );
   });
 
+  it("explique clairement un type de média refusé, sans message en double", () => {
+    const image = { ...video, kind: "IMAGE" as const, mimeType: "image/png", durationMs: null };
+    expect(validateContent({ ...content, title: "Ok" }, "", [image], caps).filter((i) => i.field === "media").map((i) => i.message)).toEqual([
+      "Média 1 : les images ne sont pas acceptées ici (vidéos uniquement).",
+    ]);
+  });
+
   it("exige un média quand le texte seul n'est pas pris en charge", () => {
     expect(validateContent({ ...content, title: "Ok" }, "", [], caps).map((i) => i.field)).toContain("media");
   });

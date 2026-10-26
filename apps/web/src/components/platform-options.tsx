@@ -22,6 +22,7 @@ export function InstagramOptions({ options, onChange }: Props) {
     <label className="flex items-start gap-2 text-sm">
       <input
         type="checkbox"
+        name="ig-share-to-feed"
         checked={options.shareToFeed !== false}
         onChange={(e) => onChange({ ...options, shareToFeed: e.target.checked })}
         className="mt-1 accent-[var(--accent-strong)]"

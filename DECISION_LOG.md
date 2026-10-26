@@ -4,6 +4,22 @@
 
 ---
 
+## ADR-015 — Vérification finale : E2E, CI, CSP, sauvegardes, réinitialisation de l'administrateur
+
+- **Date** : 2026-10-26
+- **Statut** : Accepté
+- **Décideur** : Claude (qa-engineer, devops-engineer, security-engineer)
+- **Décision** :
+  - Playwright pour le parcours principal, uniquement avec le connecteur de simulation (aucune publication réelle) ; Chrome local (`PW_CHANNEL=chrome`) ou Chromium en CI.
+  - CI GitHub Actions en deux jobs (qualité avec PostgreSQL + FFmpeg ; E2E sur le stack Docker avec un `.env` aléatoire jetable).
+  - CSP en production (`'unsafe-inline'` pour les scripts faute de nonce) ; contrôle d'origine des uploads accepté si l'origine correspond à `APP_URL` ou à l'hôte interrogé.
+  - `scripts/backup.sh` / `restore.sh` (pg_dump custom + archive du volume médias), restauration protégée par `--confirmer`, mode à blanc par variables.
+  - `admin:reset` : modifier `.env` n'a d'effet qu'à la création ; une commande explicite réaligne l'administrateur et ferme ses sessions.
+- **Alternatives écartées** : CSP à nonce (exige un rendu entièrement dynamique, gain limité pour un outil local) ; réinitialisation automatique au démarrage (changerait les identifiants à l'insu de l'utilisateur).
+- **Impact** : qualité / sécurité / exploitation
+
+---
+
 ## ADR-014 — Connecteurs Instagram, LinkedIn, X et TikTok manuel
 
 - **Date** : 2026-10-26

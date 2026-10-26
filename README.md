@@ -1,96 +1,107 @@
 # Studio de publication
 
-Outil personnel pour préparer, programmer et suivre des publications Instagram, TikTok, YouTube, X et
-LinkedIn, depuis une interface web et (à venir) depuis Claude Code via un serveur MCP.
+Outil personnel pour préparer, programmer et suivre des publications sur **YouTube, Instagram,
+LinkedIn, X et TikTok**, depuis une interface web ou depuis **Claude Code** (serveur MCP).
+Il tourne en local avec Docker Desktop et peut ensuite être déplacé sur un VPS.
 
-> **État : incrément 5 sur 6.** Disponibles : connexion administrateur, bibliothèque de médias,
-> brouillons avec variantes, aperçu, publication immédiate et programmée, worker, calendrier,
-> historique, **serveur MCP pour Claude Code** (`docs/mcp.md`), connecteurs **YouTube**
-> (`docs/youtube.md`), **Instagram, LinkedIn, X** et **TikTok en mode manuel**
-> (`docs/connecteurs.md`), et un **connecteur de test (simulation)**.
-> Les connecteurs réels sont vérifiés par des tests de contrat ; aucun n'a encore été essayé contre
-> la vraie API (il faut tes identifiants).
+Ce que tu peux faire :
+- importer images et vidéos (analyse réelle du fichier, original conservé, aucun recadrage) ;
+- rédiger un contenu principal et des variantes par réseau, avec aperçu et vérification des limites
+  de chaque réseau ;
+- publier tout de suite ou programmer (fuseau IANA, changements d'heure gérés), dupliquer, annuler ;
+- suivre chaque destination séparément (un échec n'en relance jamais une autre), dans le tableau de
+  bord, le calendrier et l'historique ;
+- piloter le tout depuis Claude Code, avec des jetons à portée limitée.
+
+État des connecteurs : voir [docs/bilan.md](docs/bilan.md).
 
 ## Prérequis
 
-- Docker Desktop (Windows, macOS ou Linux)
+- Docker Desktop (Windows, macOS) ou Docker Engine + Compose (Linux)
 - Pour développer hors Docker : Node.js 24, pnpm 10 (`corepack enable`), FFmpeg dans le `PATH`
 
 ## Démarrage
 
-1. Copier `.env.example` vers `.env` et renseigner au minimum :
+1. Copier `.env.example` vers `.env`, puis renseigner au minimum :
    - `POSTGRES_PASSWORD` : longue valeur aléatoire ;
-   - `ADMIN_EMAIL` et `ADMIN_INITIAL_PASSWORD` (12 caractères minimum).
+   - `ADMIN_EMAIL` et `ADMIN_INITIAL_PASSWORD` (12 caractères minimum) ;
+   - `TOKEN_ENCRYPTION_KEY` (commande dans `.env.example`).
 2. Lancer :
    ```bash
    docker compose up --build
    ```
-3. Ouvrir http://localhost:3000 et se connecter avec `ADMIN_EMAIL` et `ADMIN_INITIAL_PASSWORD`
-   (le compte est créé automatiquement au premier démarrage ; il n'y a pas de page d'inscription).
-4. Après la première connexion, vider `ADMIN_INITIAL_PASSWORD` dans `.env` (le compte existe déjà ;
-   le mot de passe se change dans **Réglages**).
+3. Ouvrir http://localhost:3000 et se connecter avec `ADMIN_EMAIL` / `ADMIN_INITIAL_PASSWORD`.
+   Il n'y a pas de page d'inscription : le compte est créé **une seule fois**, au premier démarrage.
+4. Changer le mot de passe dans **Réglages**, puis vider `ADMIN_INITIAL_PASSWORD` dans `.env`.
 
-Services : interface http://localhost:3000, serveur MCP http://127.0.0.1:3333/mcp (jeton à créer
-dans **Réglages**, procédure dans `docs/mcp.md`).
+Mot de passe perdu ou e-mail à changer : renseigner les nouvelles valeurs dans `.env` (12 caractères
+minimum pour le mot de passe), puis
+```bash
+docker compose run --rm migrate pnpm admin:reset
+```
+Modifier `.env` sans cette commande n'a aucun effet sur un compte existant.
 
-Les services ne sont publiés que sur `127.0.0.1`. PostgreSQL n'est pas exposé (sauf override de
-développement `compose.dev.yaml`, également limité à `127.0.0.1`).
+| Service | Adresse (boucle locale uniquement) |
+|---------|-----------------------------------|
+| Interface | http://localhost:3000 |
+| Serveur MCP | http://127.0.0.1:3333/mcp |
+| PostgreSQL, Redis | non exposés (sauf `compose.dev.yaml`, sur 127.0.0.1) |
 
-## Programmation
+## Connecter les réseaux
 
-- Les dates sont stockées en UTC avec le fuseau choisi (Europe/Rome par défaut). Une heure qui
-  n'existe pas (passage à l'heure d'été) est refusée avec une proposition ; une heure qui existe
-  deux fois (passage à l'heure d'hiver) demande de choisir laquelle.
+- YouTube : [docs/youtube.md](docs/youtube.md)
+- Instagram, LinkedIn, X, TikTok (mode manuel), URL publique HTTPS : [docs/connecteurs.md](docs/connecteurs.md)
+- Claude Code (MCP) : [docs/mcp.md](docs/mcp.md)
+
+Pour essayer sans aucun réseau : **Comptes → Ajouter un compte de test** (connecteur de
+simulation, toujours signalé comme tel, rien ne sort de ta machine).
+
+## Programmation : ce qu'il faut savoir
+
+- **En local, les publications ne partent que si l'ordinateur est allumé, connecté, hors veille,
+  avec Docker actif.** Exception : la programmation native de YouTube (vidéo publique), publiée par
+  YouTube lui-même.
 - Programmer ou publier vaut **autorisation** pour la version enregistrée, ces comptes et cette
-  date. Pour modifier ensuite : annuler la programmation (la publication redevient un brouillon).
-- Chaque destination (compte) a son propre état : un échec n'entraîne jamais de nouvel envoi vers
-  une destination déjà publiée.
-- **La programmation locale exige un ordinateur allumé, connecté, sans veille, avec Docker actif.**
-  Une publication manquée pendant un arrêt suit la règle des Réglages (par défaut : te demander de
-  la reprogrammer).
-- Un envoi dont le résultat est inconnu (coupure, délai dépassé) passe en **Résultat incertain** :
-  vérification auprès de la plateforme avant tout nouvel envoi, sinon décision manuelle.
+  date. Pour modifier ensuite : annuler (la publication redevient un brouillon) puis reprogrammer.
+- Publication manquée pendant un arrêt : règle des **Réglages** (par défaut : te demander).
+- Résultat inconnu (coupure, délai dépassé) : le Studio vérifie auprès du réseau avant tout renvoi ;
+  s'il ne peut pas savoir, il te demande de trancher. Aucune garantie « exactement une fois » n'est
+  promise là où l'API ne la permet pas.
 
-### Connecteur de test
+## Exploitation
 
-Dans **Comptes**, ajoute un compte de test et choisis son comportement (réussite, erreur
-temporaire, quota, résultat incertain, jeton expiré…). Le scénario peut aussi se choisir par
-publication dans la variante « Test (simulation) ». Rien n'est envoyé à l'extérieur.
+Sauvegarde, restauration, mise à jour et migration vers un VPS : [docs/exploitation.md](docs/exploitation.md).
 
-## Données
-
-| Volume Docker | Contenu |
-|---------------|---------|
-| `pgdata` | Base PostgreSQL (source de vérité) |
-| `media` | Originaux importés et vignettes (`/data/media`) |
-| `redisdata` | File d'exécution (reconstructible à partir de PostgreSQL) |
-| `./inbox` (dossier du projet) | Fichiers à importer via le MCP (lecture seule pour les conteneurs) |
-
-Les médias importés sont analysés par ffprobe (le type réel est lu dans le fichier, pas dans
-l'extension), puis copiés dans le stockage de l'application : une publication ne dépend jamais du
-fichier d'origine. Formats acceptés : JPEG, PNG, WebP, MP4, MOV, WebM. Taille maximale :
-`MEDIA_MAX_BYTES` (4 Gio par défaut). Pour un stockage compatible S3, voir les variables `S3_*`.
+```bash
+scripts/backup.sh
+```
 
 ## Développement
 
 ```bash
 pnpm install
-docker compose -f compose.yaml -f compose.dev.yaml up -d postgres
-pnpm db:deploy          # applique les migrations (charger .env au préalable)
+docker compose -f compose.yaml -f compose.dev.yaml up -d postgres redis
+pnpm db:deploy
 pnpm dev
 pnpm lint && pnpm typecheck && pnpm test
+pnpm e2e
 ```
 
-Les tests d'intégration (PostgreSQL + FFmpeg réels) nécessitent `TEST_DATABASE_URL` vers une base
-dont le nom finit par `_test`.
+`pnpm db:deploy` applique les migrations (charger `.env` avant). `pnpm e2e` lance le parcours navigateur contre l'application démarrée.
+
+Les tests d'intégration utilisent PostgreSQL et FFmpeg réels (`TEST_DATABASE_URL`, base `*_test`).
+Les connecteurs réels sont couverts par des **tests de contrat** (faux serveurs reproduisant les
+échanges documentés), pas par des appels aux vraies API. La CI (`.github/workflows/ci.yml`) exécute
+lint, types, tests, build et le parcours E2E sur le stack Docker.
 
 ## Documentation
 
-- `docs/plan-de-realisation.md` — plan et incréments
-- `docs/mcp.md` — connexion de Claude Code, dossier inbox, outils, exemples
-- `docs/youtube.md` — créer les identifiants Google et connecter une chaîne
-- `docs/connecteurs.md` — Instagram, LinkedIn, X, TikTok (manuel), URL publique HTTPS
-- `docs/integrations.md` — sources officielles vérifiées et limites
-- `DECISION_LOG.md` — choix techniques
-- `PROJECT_STATE.md` — avancement
-- `docs/manual-tasks.md` — ce qu'il te reste à configurer
+| Fichier | Contenu |
+|---------|---------|
+| [docs/bilan.md](docs/bilan.md) | Ce qui fonctionne, ce qui est testé, ce qui dépend de toi |
+| [docs/manual-tasks.md](docs/manual-tasks.md) | Tâches à faire de ton côté |
+| [docs/integrations.md](docs/integrations.md) | Sources officielles vérifiées et limites des API |
+| [docs/plan-de-realisation.md](docs/plan-de-realisation.md) | Plan et incréments |
+| [DECISION_LOG.md](DECISION_LOG.md) | Choix techniques argumentés |
+| [CHANGELOG.md](CHANGELOG.md) | Historique des versions |
+| [CLAUDE.md](CLAUDE.md) | Architecture, commandes et conventions (pour Claude Code) |

@@ -46,6 +46,9 @@ docker compose -f compose.yaml -f compose.dev.yaml up -d postgres   # Postgres s
 pnpm dev            # Next.js sur l'hôte (charger .env)
 pnpm lint && pnpm typecheck && pnpm test
 pnpm db:migrate     # nouvelle migration (dev)
+pnpm e2e            # Playwright contre l'application lancée (PW_CHANNEL=chrome en local)
+scripts/backup.sh / scripts/restore.sh <dossier> --confirmer
+docker compose run --rm migrate pnpm admin:reset   # réaligne l'administrateur sur .env
 ```
 Les tests d'intégration utilisent `TEST_DATABASE_URL` (base `*_test`, migrée avec `migrate deploy`, jamais
 réinitialisée automatiquement). Sans cette variable, ils sont ignorés.

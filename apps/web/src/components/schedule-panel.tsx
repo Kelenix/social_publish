@@ -58,6 +58,8 @@ export function SchedulePanel({ accounts, platforms, timezone, save }: Props) {
               <label key={a.id} className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
+                  name="accounts"
+                  value={a.id}
                   checked={chosen.includes(a.id)}
                   onChange={(e) => setSelected((prev) => (e.target.checked ? [...prev, a.id] : prev.filter((x) => x !== a.id)))}
                   className="accent-[var(--accent-strong)]"

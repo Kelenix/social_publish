@@ -56,7 +56,11 @@ export function validateContent(content: ResolvedVariant, caption: string, media
   for (const [i, m] of media.entries()) {
     const label = `Média ${i + 1}`;
     const size = Number(m.sizeBytes);
-    if (!caps.contentTypes.includes(m.kind)) issues.push({ field: "media", message: `${label} : ${m.kind === "VIDEO" ? "vidéo" : "image"} non prise en charge.` });
+    if (!caps.contentTypes.includes(m.kind)) {
+      const only = caps.contentTypes.includes("VIDEO") ? "vidéos" : "images";
+      issues.push({ field: "media", message: `${label} : ${m.kind === "VIDEO" ? "les vidéos ne sont pas acceptées" : "les images ne sont pas acceptées"} ici (${only} uniquement).` });
+      continue;
+    }
     if (!limits.mimeTypes.includes(m.mimeType)) issues.push({ field: "media", message: `${label} : format ${m.mimeType} non accepté.` });
     const maxBytes = m.kind === "VIDEO" ? limits.videoMaxBytes : limits.imageMaxBytes;
     if (maxBytes !== undefined && size > maxBytes) issues.push({ field: "media", message: `${label} : ${mb(size)} (maximum ${mb(maxBytes)}).` });

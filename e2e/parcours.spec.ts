@@ -27,6 +27,9 @@ async function login(page: Page) {
   await expect(page.getByRole("heading", { name: "Tableau de bord" })).toBeVisible();
 }
 
+/** Lien de la barre de navigation (les mêmes libellés existent ailleurs dans les pages). */
+const nav = (page: Page, name: string) => page.getByRole("navigation").getByRole("link", { name, exact: true }).click();
+
 test.describe.configure({ mode: "serial" });
 
 test.beforeAll(() => {
@@ -39,7 +42,7 @@ test("les pages protégées exigent une connexion", async ({ page }) => {
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Mot de passe").fill("mauvais-mot-de-passe");
   await page.getByRole("button", { name: "Se connecter" }).click();
-  await expect(page.getByRole("alert")).toContainText("invalide");
+  await expect(page.locator("form").getByRole("alert")).toContainText("invalide");
 });
 
 test("parcours complet avec le connecteur de simulation", async ({ page }) => {
@@ -47,25 +50,25 @@ test("parcours complet avec le connecteur de simulation", async ({ page }) => {
 
   // Le tableau de bord rappelle les contraintes de la programmation locale et l'état du worker.
   await expect(page.getByRole("note")).toContainText("ordinateur est allumé");
-  await expect(page.getByText("Actif")).toBeVisible();
+  await expect(page.getByText("Actif", { exact: true })).toBeVisible();
 
   // Import d'un média.
-  await page.getByRole("link", { name: "Médias" }).click();
+  await nav(page, "Médias");
   const name = `e2e-${run}.jpg`;
   await page.locator('input[type="file"]').setInputFiles({ name, mimeType: "image/jpeg", buffer: sampleImage() });
   await expect(page.getByText("Importé")).toBeVisible();
   await expect(page.getByRole("button", { name: new RegExp(name) })).toBeVisible();
 
   // Compte de simulation.
-  await page.getByRole("link", { name: "Comptes" }).click();
+  await nav(page, "Comptes");
   await expect(page.getByText("Simulation — aucun réseau réel")).toBeVisible();
   await page.getByLabel("Nom").fill(`E2E ${run}`);
   await page.getByRole("button", { name: "Ajouter" }).click();
   await expect(page.getByText(`E2E ${run}`)).toBeVisible();
 
   // Brouillon multi-plateforme.
-  await page.getByRole("link", { name: "Publications" }).click();
-  await page.getByRole("link", { name: "Nouvelle publication" }).click();
+  await nav(page, "Publications");
+  await page.locator("main header").getByRole("link", { name: "Nouvelle publication" }).click();
   await page.getByLabel("Titre", { exact: true }).fill(`Parcours E2E ${run}`);
   await page.getByLabel("Texte", { exact: true }).fill("Publication de bout en bout");
   await page.getByLabel("Hashtags", { exact: true }).fill("#e2e");
@@ -89,8 +92,8 @@ test("parcours complet avec le connecteur de simulation", async ({ page }) => {
   await expect(page.getByText(/simulation:\/\/publication\//)).toBeVisible();
 
   // Historique et calendrier.
-  await page.getByRole("link", { name: "Historique" }).click();
+  await nav(page, "Historique");
   await expect(page.getByRole("link", { name: `Parcours E2E ${run}` }).first()).toBeVisible();
-  await page.getByRole("link", { name: "Calendrier" }).click();
+  await nav(page, "Calendrier");
   await expect(page.getByTitle(new RegExp(`Parcours E2E ${run}`))).toBeVisible();
 });
