@@ -22,18 +22,12 @@ const STATE: Record<ConnectorState, { label: string; tone: "neutral" | "success"
   MANUAL_ONLY: { label: "Mode manuel uniquement", tone: "neutral" },
 };
 
-/** Incrément prévu pour chaque connecteur réel (voir docs/plan-de-realisation.md). */
-const PLANNED: Record<(typeof REAL_PLATFORMS)[number], string> = {
-  YOUTUBE: "incrément 4",
-  INSTAGRAM: "incrément 5",
-  LINKEDIN: "incrément 5",
-  X: "incrément 5",
-  TIKTOK: "incrément 5 (mode manuel)",
-};
-
-/** Variables à renseigner pour activer un connecteur OAuth (voir docs/youtube.md). */
+/** Variables à renseigner pour activer un connecteur OAuth (procédures dans docs/). */
 const SETUP: Record<string, string> = {
   youtube: "YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET et TOKEN_ENCRYPTION_KEY dans .env (procédure : docs/youtube.md)",
+  instagram: "INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET, TOKEN_ENCRYPTION_KEY, ainsi que PUBLIC_BASE_URL (HTTPS public) et MEDIA_URL_SIGNING_KEY (procédure : docs/connecteurs.md)",
+  linkedin: "LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET et TOKEN_ENCRYPTION_KEY (procédure : docs/connecteurs.md)",
+  x: "X_CLIENT_ID, X_CLIENT_SECRET et TOKEN_ENCRYPTION_KEY (procédure : docs/connecteurs.md)",
 };
 
 export default async function AccountsPage({ searchParams }: PageProps<"/comptes">) {
@@ -61,21 +55,27 @@ export default async function AccountsPage({ searchParams }: PageProps<"/comptes
         <h2 className="mb-3 text-sm font-semibold">Réseaux sociaux</h2>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {REAL_PLATFORMS.map((platform) => {
-            const connector = connectorForPlatform(platform);
-            const state = connector ? connectorState(connector, accounts.filter((a) => a.connector === connector.id)) : "NOT_CONFIGURED";
+            const connector = connectorForPlatform(platform)!;
+            const state = connectorState(connector, accounts.filter((a) => a.connector === connector.id));
             return (
               <li key={platform} className="rounded-lg border border-border bg-surface p-4">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{PLATFORM_LABELS[platform]}</span>
                   <Badge tone={STATE[state].tone}>{STATE[state].label}</Badge>
                 </div>
-                {!connector && <p className="mt-2 text-xs text-muted">Connecteur prévu à l&apos;{PLANNED[platform]}.</p>}
-                {connector && !connector.isConfigured() && (
+                {connector.manualOnly && (
+                  <ul className="mt-2 list-disc space-y-0.5 pl-4 text-xs text-muted">
+                    {connector.capabilities().notes.map((n) => (
+                      <li key={n}>{n}</li>
+                    ))}
+                  </ul>
+                )}
+                {connector.oauth && !connector.isConfigured() && (
                   <p className="mt-2 text-xs text-muted">
                     À configurer : {SETUP[connector.id]}. URL de retour OAuth : <code className="font-mono">{redirectUriFor(connector.id)}</code>
                   </p>
                 )}
-                {connector?.isConfigured() && (
+                {connector.oauth && connector.isConfigured() && (
                   <div className="mt-3 space-y-2">
                     {accounts
                       .filter((a) => a.connector === connector.id)

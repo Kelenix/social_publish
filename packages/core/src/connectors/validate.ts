@@ -68,10 +68,11 @@ export function validateContent(content: ResolvedVariant, caption: string, media
         issues.push({ field: "media", message: `${label} : durée ${sec(m.durationMs)} (maximum ${sec(limits.videoMaxDurationMs)}).` });
       }
     }
-    if (limits.aspectRatio && m.width && m.height) {
+    const range = m.kind === "IMAGE" && limits.imageAspectRatio ? limits.imageAspectRatio : limits.aspectRatio;
+    if (range && m.width && m.height) {
       const ratio = m.width / m.height;
-      if (ratio < limits.aspectRatio.min - 0.005 || ratio > limits.aspectRatio.max + 0.005) {
-        issues.push({ field: "media", message: `${label} : ratio ${ratio.toFixed(2)} hors limites (${limits.aspectRatio.min.toFixed(2)} à ${limits.aspectRatio.max.toFixed(2)}). Aucun recadrage automatique.` });
+      if (ratio < range.min - 0.005 || ratio > range.max + 0.005) {
+        issues.push({ field: "media", message: `${label} : ratio ${ratio.toFixed(2)} hors limites (${range.min.toFixed(2)} à ${range.max.toFixed(2)}). Aucun recadrage automatique.` });
       }
     }
   }

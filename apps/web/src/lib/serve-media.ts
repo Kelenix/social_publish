@@ -3,7 +3,7 @@ import { Readable } from "node:stream";
 import { getStorage } from "@app/core/storage";
 
 /** Sert un objet du stockage avec prise en charge des requêtes Range (lecture vidéo). */
-export async function serveStoredFile(request: Request, key: string, contentType: string): Promise<Response> {
+export async function serveStoredFile(request: Request, key: string, contentType: string, downloadName?: string): Promise<Response> {
   const storage = getStorage();
   const size = await storage.size(key);
   if (size === null) return new Response("Introuvable", { status: 404 });
@@ -13,6 +13,7 @@ export async function serveStoredFile(request: Request, key: string, contentType
     "Accept-Ranges": "bytes",
     "Cache-Control": "private, max-age=3600",
   });
+  if (downloadName) headers.set("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(downloadName)}`);
   const match = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get("range") ?? "");
   if (match && (match[1] || match[2])) {
     const start = match[1] ? Number(match[1]) : Math.max(0, size - Number(match[2]));

@@ -4,6 +4,25 @@
 
 ---
 
+## ADR-014 — Connecteurs Instagram, LinkedIn, X et TikTok manuel
+
+- **Date** : 2026-10-26
+- **Statut** : Accepté
+- **Décideur** : Claude (backend + security-engineer)
+- **Contexte** : Incrément 5 : couvrir les autres réseaux avec les seules API officielles, sans promettre ce qu'elles ne permettent pas.
+- **Décision** :
+  - **Instagram** : « Instagram API with Instagram Login » (compte professionnel, pas de page Facebook) ; médias fournis par **URLs HTTPS signées** (HMAC, 2 h) servies sous `PUBLIC_BASE_URL` ; refus si l'adresse est absente, en HTTP ou locale. Conteneur à usage unique ⇒ rapprochement sûr après une réponse perdue.
+  - **LinkedIn** : Posts API versionnée (202610), Images/Videos API, texte « little » échappé ; pages d'entreprise seulement si `LINKEDIN_ORGANIZATIONS=true` (Community Management API accordée) ; un compte par profil et par page.
+  - **X** : OAuth 2.0 + PKCE, upload v2 par segments de 4 Mo, attente bornée du traitement ; `402`/« credit » → échec « crédits insuffisants » sans nouvel essai automatique ; aucun tarif dans le code.
+  - **Rapprochement « indéterminable »** (LinkedIn, X après envoi de la requête de création) : jamais de renvoi automatique, décision manuelle.
+  - **TikTok** : mode manuel (copie du texte, téléchargement de l'original, marquage manuel tracé) + interface d'adaptateur non implémentée.
+  - Les images ne sont jamais converties ni recadrées : un PNG est refusé pour Instagram plutôt que transformé.
+- **Alternatives écartées** : Instagram via Facebook Login (exige une page Facebook) ; recherche du post perdu sur X (lecture payante) ; conversion automatique PNG → JPEG (modifie le média).
+- **Conséquences** : Instagram nécessite une adresse HTTPS publique (tunnel en local) ; LinkedIn et X peuvent laisser une destination « résultat incertain » à trancher manuellement.
+- **Impact** : métier / sécurité (moyen)
+
+---
+
 ## ADR-013 — Connecteur YouTube : portées, programmation native, jetons chiffrés
 
 - **Date** : 2026-10-26

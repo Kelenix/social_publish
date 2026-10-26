@@ -23,7 +23,8 @@
     "./scheduling/executor": "./src/scheduling/executor.ts",
     "./scheduling/status": "./src/scheduling/status.ts",
     "./scheduling/content": "./src/scheduling/content.ts",
-    "./media/sources": "./src/media/sources.ts"
+    "./media/sources": "./src/media/sources.ts",
+    "./media/public-url": "./src/media/public-url.ts"
   },
   "scripts": {
     "admin:bootstrap": "tsx scripts/bootstrap-admin.ts",

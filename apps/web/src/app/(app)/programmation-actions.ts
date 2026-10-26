@@ -15,6 +15,8 @@ import {
 } from "@app/core/scheduling";
 import { isValidTimeZone } from "@app/core/posts/schema";
 import { prisma } from "@app/db";
+import { audit } from "@app/core/audit";
+import { PLATFORMS } from "@app/core/platforms";
 import { requireUser } from "@/lib/session";
 
 const whenSchema = z.discriminatedUnion("mode", [
@@ -105,4 +107,13 @@ export async function reconnectTestAccountAction(id: string): Promise<void> {
   const user = await requireUser();
   await reconnectTestAccount(z.uuid().parse(id), user.email);
   revalidateAll();
+}
+
+/** Trace une publication faite à la main (mode manuel) dans le journal des opérations. */
+export async function markManualPublishedAction(postId: string, platform: string): Promise<{ markedAt: string }> {
+  const user = await requireUser();
+  const id = z.uuid().parse(postId);
+  await audit({ actor: user.email, action: "post.manual_published", entity: "post", entityId: id, meta: { platform: z.enum(PLATFORMS).parse(platform) } });
+  revalidatePath(`/publications/${id}`);
+  return { markedAt: new Date().toISOString() };
 }

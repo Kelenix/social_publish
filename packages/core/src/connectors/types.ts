@@ -31,8 +31,10 @@ export type Capabilities = {
     videoMaxBytes?: number;
     videoMinDurationMs?: number;
     videoMaxDurationMs?: number;
-    /** Ratio largeur/hauteur accepté (inclus). */
+    /** Ratio largeur/hauteur accepté (inclus), pour tous les médias. */
     aspectRatio?: { min: number; max: number };
+    /** Ratio accepté pour les images seulement (ex. Instagram 4:5 à 1.91:1). */
+    imageAspectRatio?: { min: number; max: number };
   };
   notes: string[];
 };
@@ -103,7 +105,11 @@ export class ConnectorError extends Error {
   }
 }
 
-export type ReconcileResult = { found: true; remoteId: string; url?: string } | { found: false };
+export type ReconcileResult =
+  | { found: true; remoteId: string; url?: string }
+  | { found: false }
+  /** Impossible de savoir (la plateforme ne permet pas de retrouver la publication) : décision manuelle. */
+  | { found: "unknown"; reason: string };
 
 /** Compte obtenu à l'issue d'une autorisation OAuth. */
 export type OAuthAccount = {
@@ -115,6 +121,8 @@ export type OAuthAccount = {
   /** READY, ou PERMISSION_MISSING si une portée nécessaire n'a pas été accordée. */
   status: "READY" | "PERMISSION_MISSING";
   statusDetail?: string;
+  /** Autres comptes accessibles avec la même autorisation (ex. pages LinkedIn administrées). */
+  additionalAccounts?: Omit<OAuthAccount, "additionalAccounts">[];
 };
 
 export interface OAuthProvider {
@@ -128,6 +136,8 @@ export interface Connector {
   label: string;
   /** Connecteur de simulation : jamais présenté comme un réseau réel. */
   simulated?: boolean;
+  /** Publication automatique impossible : export du contenu pour publication manuelle. */
+  manualOnly?: boolean;
   isConfigured(): boolean;
   capabilities(account?: ConnectedAccount): Capabilities;
   publish(ctx: PublishContext): Promise<PublishResult>;
@@ -135,6 +145,8 @@ export interface Connector {
   reconcile?(ctx: PublishContext): Promise<ReconcileResult>;
   /** Annule une publication déjà transmise et programmée chez la plateforme. */
   cancel?(ctx: PublishContext & { remoteId: string }): Promise<void>;
+  /** Contrôles de médias propres à la plateforme (ex. pas de mélange images/vidéo). */
+  validateMedia?(media: MediaAsset[]): { field: "media"; message: string }[];
   /** Vérifie les options propres à la plateforme (visibilité, déclarations obligatoires…). */
   validateOptions?(options: Record<string, unknown>): { field: "options"; message: string }[];
   /** Envoi anticipé pour une programmation native (le PC peut être éteint à l'heure prévue). */

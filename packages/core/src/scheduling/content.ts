@@ -34,6 +34,10 @@ export async function prepareContent(post: PostWithContent, account: ConnectedAc
   const media = content.mediaIds.map((id) => byId.get(id)).filter((m): m is MediaAsset => Boolean(m));
   const body = PLATFORM_FIELDS[account.platform].includes("text") ? content.text : content.description;
   const caption = composeCaption(body, content.hashtags);
-  const issues = [...validateContent(content, caption, media, capabilities), ...(connector.validateOptions?.(content.options) ?? [])];
+  const issues = [
+    ...validateContent(content, caption, media, capabilities),
+    ...(connector.validateMedia?.(media) ?? []),
+    ...(connector.validateOptions?.(content.options) ?? []),
+  ];
   return { content, caption, media, capabilities, issues };
 }

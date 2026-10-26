@@ -63,16 +63,82 @@ Choix et limites du connecteur :
 - Non testé contre la vraie API à ce stade : vérifié par des tests de contrat (faux serveur
   reproduisant les échanges documentés).
 
-## Plateformes sociales
+## Instagram — vérifié le 2026-10-26
 
-À compléter lors de l'implémentation de chaque connecteur (incréments 4 et 5), avec liens officiels,
-permissions, URLs de retour OAuth, quotas et restrictions vérifiés à la date d'implémentation.
+Sources : https://developers.facebook.com/docs/instagram-platform/content-publishing ·
+https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/business-login ·
+https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media
+
+- Variante retenue : « Instagram API with Instagram Login » (graph.instagram.com, compte professionnel,
+  portées `instagram_business_basic`, `instagram_business_content_publish`).
+- Conteneur `POST /<IG_ID>/media` (image_url / video_url « on a public server »), statut `status_code`
+  (FINISHED, IN_PROGRESS, ERROR, EXPIRED après 24 h, PUBLISHED), puis `POST /<IG_ID>/media_publish`.
+- Images : JPEG uniquement, 8 Mo, ratio 4:5 à 1.91:1. Reels : MOV/MP4, 3 s à 15 min, 300 Mo.
+  Légende : 2200 caractères, 30 hashtags. Carrousel : 20 éléments.
+- Limite : « 100 API-published posts within a 24-hour moving period » ; une autre section indique 50.
+- OAuth : code valable 1 h ; jeton court → jeton long (60 jours) via `ig_exchange_token` ; rafraîchissement
+  `ig_refresh_token` si le jeton a plus de 24 h. Pas de PKCE documenté (state utilisé).
+- Version d'API : la doc utilise un paramètre « LATEST » ; exemples en `v26.0` (valeur par défaut,
+  modifiable par `INSTAGRAM_API_VERSION`).
+- Choix : `media_type=REELS` pour une vidéo seule, `VIDEO` pour un élément de carrousel (la doc est
+  incohérente sur ce point).
+
+## LinkedIn — vérifié le 2026-10-26
+
+Sources : https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api ·
+images-api · videos-api · little-text-format ·
+https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin
+
+- `POST /rest/posts` avec `LinkedIn-Version: 202610` (dernière version listée ; la 202511 est retirée le
+  16/11/2026) et `X-Restli-Protocol-Version: 2.0.0` ; identifiant dans l'en-tête `x-restli-id`.
+- Permissions : `w_member_social` (profil, produit « Share on LinkedIn ») ; `w_organization_social`
+  (pages, rôle administrateur) ; `r_member_social` restreinte (impossible de retrouver un post perdu).
+- Images : `initializeUpload` → PUT ; JPG, GIF, PNG ; avec `w_member_social` seul, lecture des images
+  impossible. Vidéos : `initializeUpload` (parties de 4 Mo) → PUT par partie (ETag) → `finalizeUpload` ;
+  MP4, 3 s à 30 min, 75 Ko à 500 Mo ; statuts PROCESSING / AVAILABLE / PROCESSING_FAILED.
+- Texte au format « little » : caractères réservés `| { } @ [ ] ( ) < > # \ * _ ~` échappés ; `#mot`
+  reste un hashtag.
+- Limite « Share on LinkedIn » : 150 requêtes par jour et par membre.
+- Non vérifié : longueur maximale du texte (3000 retenu, valeur usuelle), nom exact de la portée de
+  lecture des rôles d'organisation (`r_organization_admin` retenu), disponibilité d'un jeton de
+  rafraîchissement (réservé aux partenaires approuvés).
+
+## X — vérifié le 2026-10-26
+
+Sources : https://docs.x.com/x-api/posts/create-post ·
+https://docs.x.com/x-api/media/quickstart/media-upload-chunked ·
+https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code ·
+https://docs.x.com/x-api/fundamentals/rate-limits
+
+- `POST /2/tweets` (`text`, `media.media_ids` : 1 à 4) ; 4 photos ou 1 vidéo (20 min / 8 Go par défaut).
+- Upload v2 : `POST /2/media/upload/initialize` (JSON), `/{id}/append` (multipart, segments ≤ 5 Mo),
+  `/{id}/finalize`, statut `GET /2/media/upload?command=STATUS&media_id=…`.
+- OAuth 2.0 : `https://x.com/i/oauth2/authorize`, `https://api.x.com/2/oauth2/token`, PKCE, portées
+  `tweet.read tweet.write users.read media.write offline.access` ; jeton d'accès de 2 h, rafraîchissement
+  avec `offline.access`.
+- Limites : `POST /2/tweets` 100 / 15 min par utilisateur ; en-têtes `x-rate-limit-reset` (secondes epoch).
+- Facturation à l'usage : aucune erreur de crédit n'est documentée sur ces pages ; le Studio traite un
+  `402` ou un message mentionnant « credit » comme « crédits insuffisants ». Aucun tarif codé.
+- Non vérifié : limite de 280 caractères et pondération exacte (comptage simple).
+
+## TikTok — vérifié le 2026-10-26
+
+Source : https://developers.tiktok.com/doc/content-posting-api-get-started
+
+- Publication directe : portée `video.publish` approuvée, interrogation préalable des informations
+  du créateur, choix de `privacy_level`.
+- « All content posted by unaudited clients will be restricted to private viewing mode » ; l'audit
+  lève cette restriction.
+- Choix : mode manuel (export du texte et de l'original) + interface `TikTokPublishAdapter` sans
+  implémentation.
+
+## Plateformes sociales
 
 | Plateforme | État | Incrément |
 |------------|------|-----------|
 | YouTube | Implémenté ; test réel en attente de tes identifiants | 4 |
-| Instagram | Non implémenté | 5 |
-| LinkedIn | Non implémenté | 5 |
-| X | Non implémenté | 5 |
-| TikTok | Non implémenté (mode manuel prévu) | 5 |
+| Instagram | Implémenté ; test réel en attente (identifiants + URL publique) | 5 |
+| LinkedIn | Implémenté ; test réel en attente (identifiants) | 5 |
+| X | Implémenté ; test réel en attente (identifiants + crédits) | 5 |
+| TikTok | Mode manuel (export) ; adaptateur prévu, non implémenté | 5 |
 | Test (simulation) | Implémenté — aucune connexion externe | 2 |

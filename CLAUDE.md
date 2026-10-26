@@ -34,6 +34,8 @@ Conventions :
 - Le MCP ne lit que `INBOX_DIR` (`resolveInboxPath`) ; les actions longues passent par `Operation` (exécutées par le worker).
 - Connecteurs OAuth : `startAuthorization` / `completeAuthorization` (state + PKCE) ; jetons uniquement via `readCredentials` / `saveCredentials` (chiffrés, `crypto.ts`). URLs d'API surchargeables par variables d'environnement pour les tests de contrat.
 - État reprenable d'un envoi : `ctx.saveState` (persisté immédiatement dans `Destination.connectorState`).
+- Médias pour une plateforme qui télécharge elle-même : uniquement `signedMediaUrl` (HTTPS public, signé, temporaire).
+- Rapprochement : `found: "unknown"` quand la plateforme ne permet pas de savoir → jamais de renvoi automatique.
 - Le connecteur `test` est une simulation : toujours étiqueté comme tel, jamais présenté comme un réseau.
 - Textes d'interface en français.
 

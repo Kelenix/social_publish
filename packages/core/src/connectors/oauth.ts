@@ -6,6 +6,7 @@ import { getConfig } from "../config";
 import { decrypt, encrypt, encryptJson } from "../crypto";
 import { OAuthFlowError } from "./credentials";
 import { getConnector } from "./registry";
+import type { OAuthAccount } from "./types";
 
 export { OAuthFlowError } from "./credentials";
 
@@ -43,20 +44,24 @@ export async function completeAuthorization(connectorId: string, params: { code?
 
   const connector = getConnector(connectorId);
   const result = await connector.oauth!.exchange({ code: params.code, codeVerifier: decrypt(pending.codeVerifier), redirectUri: redirectUriFor(connectorId) });
-  const data = {
-    displayName: result.displayName,
-    status: result.status,
-    statusDetail: result.statusDetail ?? null,
-    credentials: encryptJson(result.credentials),
-    grantedScopes: result.grantedScopes,
-    metadata: result.metadata as object,
-    rateLimitedUntil: null,
+  const upsert = (r: Omit<OAuthAccount, "additionalAccounts">) => {
+    const data = {
+      displayName: r.displayName,
+      status: r.status,
+      statusDetail: r.statusDetail ?? null,
+      credentials: encryptJson(r.credentials),
+      grantedScopes: r.grantedScopes,
+      metadata: r.metadata as object,
+      rateLimitedUntil: null,
+    };
+    return prisma.connectedAccount.upsert({
+      where: { connector_externalId: { connector: connectorId, externalId: r.externalId } },
+      create: { connector: connectorId, platform: connector.platform, externalId: r.externalId, ...data },
+      update: data,
+    });
   };
-  const account = await prisma.connectedAccount.upsert({
-    where: { connector_externalId: { connector: connectorId, externalId: result.externalId } },
-    create: { connector: connectorId, platform: connector.platform, externalId: result.externalId, ...data },
-    update: data,
-  });
+  const account = await upsert(result);
+  for (const extra of result.additionalAccounts ?? []) await upsert(extra);
   await audit({ actor, action: "account.oauth_connected", entity: "account", entityId: account.id, meta: { connector: connectorId, status: account.status, scopes: result.grantedScopes } });
   return account;
 }

@@ -125,6 +125,9 @@ export async function executeDestination(id: string, workerId: string, now = new
   try {
     if (kind === "reconcile") {
       const found = await connector.reconcile!(ctx);
+      if (found.found === "unknown") {
+        return finish(dest, attempt.id, "UNCERTAIN", { status: "UNCERTAIN", nextAttemptAt: new Date("9999-12-31") }, { code: "UNCERTAIN", message: `${found.reason} Vérifie sur la plateforme, puis indique si la publication existe.` });
+      }
       if (found.found) {
         // Trouvée chez la plateforme : si elle expose un statut, on vérifie le traitement avant de conclure.
         const data: Prisma.DestinationUpdateInput = connector.getStatus

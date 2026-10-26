@@ -4,10 +4,10 @@
 
 ## Snapshot
 
-- **Phase courante** : 4 — Implémentation (Inc-4 terminé, test réel YouTube en attente ; Inc-5 à démarrer)
+- **Phase courante** : 4 — Implémentation (Inc-5 terminé ; tests réels en attente des identifiants ; Inc-6 à démarrer)
 - **Dernière mise à jour** : 2026-10-26
 - **Santé** : 🟢 OK
-- **Prochaine action** : Incrément 5 — Instagram, LinkedIn, X, TikTok (mode manuel) ; en parallèle, test réel YouTube par l'utilisateur (M4, M10)
+- **Prochaine action** : Incrément 6 — vérification complète (revue de code et sécurité, CI, E2E), sauvegarde/restauration, migration VPS, bilan final
 
 ## Avancement par phase
 
@@ -16,8 +16,8 @@
 | 0 — Cadrage & intake        | ✅ fait | Plan validé le 2026-10-26 |
 | 1 — Définition produit      | ⬜ à faire | |
 | 2 — Planification           | ⬜ à faire | |
-| 3 — Architecture & design   | 🔄 en cours | ADR-001 à 013 |
-| 4 — Implémentation          | 🔄 en cours | Inc-1 ✅ Inc-2 ✅ Inc-3 ✅ Inc-4 ✅ (contrat) |
+| 3 — Architecture & design   | ✅ fait | ADR-001 à 014 |
+| 4 — Implémentation          | ✅ fait (contrat) | Inc-1 à Inc-5 ✅ ; connecteurs réels non testés contre les vraies API |
 | 5 — Qualité                 | ⬜ à faire | |
 | 6 — Mise en production      | ⬜ à faire | |
 | 7 — Documentation           | ⬜ à faire | |
@@ -31,7 +31,7 @@
 | Inc-2 | Scheduler, worker, connecteur de test, calendrier, historique | §6, §7, §11 | P0 | ✅ |
 | Inc-3 | Serveur MCP + jetons + autorisations | §8, §9 | P0 | ✅ |
 | Inc-4 | Premier connecteur réel (OAuth) : YouTube | §5 | P1 | ✅ tests de contrat ; ⏸️ test réel (identifiants) |
-| Inc-5 | Autres connecteurs + TikTok manuel | §5 | P1 | ⬜ |
+| Inc-5 | Autres connecteurs + TikTok manuel | §5 | P1 | ✅ tests de contrat ; ⏸️ tests réels (identifiants) |
 | Inc-6 | Vérification complète + documentation | §1, §10, §11 | P0 | ⬜ |
 
 ## Décisions ouvertes / questions à l'utilisateur
@@ -48,6 +48,8 @@
 - voir `docs/manual-tasks.md`
 
 ## Journal de session
+
+- 2026-10-26 — Inc-4 commité (`f28d194`). Inc-5 livré sur `feat/inc-5-connecteurs` (non commité) : docs Instagram/LinkedIn/X/TikTok vérifiées, URLs HTTPS signées pour les médias, connecteurs Instagram (conteneurs, carrousel, Reels), LinkedIn (profil + pages, images, vidéos multipart, texte « little »), X (OAuth PKCE, upload v2, crédits, limites), TikTok manuel (export + adaptateur), options LinkedIn/Instagram dans l'éditeur, page Comptes. Vérifié : 167 tests dont 20 de contrat (faux serveurs) ; Docker 5 services healthy ; UI Comptes (5 réseaux, états réels) ; export TikTok (texte, téléchargement en pièce jointe, marquage) ; route publique : 403 sans signature. Non vérifié : vraies API (identifiants, URL publique, crédits X).
 
 - 2026-10-26 — Inc-3 commité (`c776d2d`). Inc-4 livré sur `feat/inc-4-youtube` (non commité) : docs officielles YouTube/OAuth vérifiées (quota 100 uploads/j, plus de restriction « privé » pour les projets non vérifiés, jetons de 7 j en Testing), chiffrement AES-256-GCM, OAuth state + PKCE, connecteur YouTube (upload reprenable, suivi upload/traitement/publication, programmation native + annulation, quotas, refus), options YouTube dans l'éditeur, page Comptes. Vérifié : 141 tests dont 17 tests de contrat contre un faux serveur Google (reprise réelle au milieu du fichier, rapprochement par session, rafraîchissement, invalid_grant, quota, refus, publishAt + annulation) ; Docker 5 services healthy ; UI (connecteur non configuré + URL de retour, options YouTube). Non vérifié : vraie API Google (identifiants requis), acceptation du PKCE par Google. Incident : suppression d'un dossier de migration déjà appliqué en dev → migration reconstruite à l'identique via `migrate diff`, checksum réaligné dans `_prisma_migrations` (base de dev uniquement, aucune donnée touchée).
 
