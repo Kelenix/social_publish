@@ -75,6 +75,8 @@ enum Platform {
   YOUTUBE
   X
   LINKEDIN
+  /// Connecteur de simulation : n'est jamais un réseau réel.
+  TEST
 }
 
 enum PostStatus {
@@ -85,6 +87,8 @@ enum PostStatus {
   PARTIAL
   FAILED
   CANCELLED
+  /// Au moins une destination demande une décision (résultat incertain, publication manquée).
+  NEEDS_ATTENTION
 }
 
 /// Publication : contenu principal + variantes par plateforme.
@@ -97,10 +101,13 @@ model Post {
   status    PostStatus    @default(DRAFT)
   version   Int           @default(1)
   timezone  String        @default("Europe/Rome")
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  media     PostMedia[]
-  variants  PostVariant[]
+  /// Date de publication demandée (UTC) ; l'heure locale saisie est reconstituée avec `timezone`.
+  scheduledAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  media        PostMedia[]
+  variants     PostVariant[]
+  destinations Destination[]
 
   @@index([status, updatedAt])
 }
@@ -147,4 +154,121 @@ model AuditLog {
 
   @@index([at])
   @@index([entity, entityId])
+}
+
+enum AccountStatus {
+  READY
+  RECONNECT_REQUIRED
+  PERMISSION_MISSING
+  PLATFORM_REVIEW_REQUIRED
+  MANUAL_ONLY
+}
+
+/// Compte connecté à un connecteur. Les jetons OAuth (chiffrés) arrivent avec les connecteurs réels.
+model ConnectedAccount {
+  id                 String        @id @default(uuid()) @db.Uuid
+  connector          String
+  platform           Platform
+  externalId         String
+  displayName        String
+  status             AccountStatus @default(READY)
+  statusDetail       String?
+  /// Quota / limitation de débit : aucune tentative avant cette date.
+  rateLimitedUntil   DateTime?
+  metadata           Json          @default("{}")
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  destinations       Destination[]
+
+  @@unique([connector, externalId])
+}
+
+enum DestinationStatus {
+  PENDING
+  PUBLISHING
+  PROCESSING
+  RETRY_WAIT
+  PUBLISHED
+  FAILED
+  UNCERTAIN
+  MISSED
+  CANCELLED
+}
+
+/// Une publication vers un compte : état indépendant des autres destinations.
+model Destination {
+  id               String            @id @default(uuid()) @db.Uuid
+  postId           String            @db.Uuid
+  post             Post              @relation(fields: [postId], references: [id], onDelete: Restrict)
+  accountId        String            @db.Uuid
+  account          ConnectedAccount  @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  platform         Platform
+  status           DestinationStatus @default(PENDING)
+  /// Clé d'idempotence transmise au connecteur ; une par (publication, compte, version autorisée).
+  idempotencyKey   String            @unique
+  /// Version du contenu autorisée : toute autre version est refusée à l'exécution.
+  contentVersion   Int
+  authorizedBy     String
+  authorizedAt     DateTime          @default(now())
+  scheduledAt      DateTime
+  nextAttemptAt    DateTime
+  attempts         Int               @default(0)
+  lockedBy         String?
+  lockedUntil      DateTime?
+  remoteId         String?
+  remoteUrl        String?
+  lastErrorCode    String?
+  lastError        String?
+  publishedAt      DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  history          PublicationAttempt[]
+
+  @@unique([postId, accountId])
+  @@index([status, nextAttemptAt])
+}
+
+enum AttemptOutcome {
+  PUBLISHED
+  PROCESSING
+  RETRYABLE_ERROR
+  FATAL_ERROR
+  UNCERTAIN
+  RECONCILED
+  INTERRUPTED
+}
+
+model PublicationAttempt {
+  id            String          @id @default(uuid()) @db.Uuid
+  destinationId String          @db.Uuid
+  destination   Destination     @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  kind          String
+  workerId      String
+  startedAt     DateTime        @default(now())
+  finishedAt    DateTime?
+  /// null tant que l'appel est en cours.
+  outcome       AttemptOutcome?
+  errorCode     String?
+  errorMessage  String?
+  retryAfterMs  Int?
+
+  @@index([destinationId, startedAt])
+}
+
+/// Publications enregistrées par le connecteur de simulation (permet le rapprochement).
+model SimulatedPublication {
+  id             String   @id @default(uuid()) @db.Uuid
+  accountId      String   @db.Uuid
+  /// Volontairement non unique : les tests vérifient l'absence de doublon côté application.
+  idempotencyKey String
+  payload        Json
+  createdAt      DateTime @default(now())
+
+  @@index([idempotencyKey])
+}
+
+model WorkerHeartbeat {
+  workerId   String   @id
+  startedAt  DateTime
+  lastSeenAt DateTime
 }

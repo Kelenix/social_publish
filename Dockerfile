@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Image unique, plusieurs cibles : tools (migrations, scripts), web (Next.js standalone).
+# Image unique, plusieurs cibles : tools (migrations, scripts), worker, web (Next.js standalone).
 FROM node:24.16-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
@@ -8,6 +8,7 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/web/package.json apps/web/
+COPY apps/worker/package.json apps/worker/
 COPY packages/core/package.json packages/core/
 COPY packages/db/package.json packages/db/prisma.config.ts packages/db/
 COPY packages/db/prisma packages/db/prisma
@@ -17,6 +18,15 @@ COPY . .
 # Outils (migrations, création de l'administrateur).
 FROM deps AS tools
 ENV NODE_ENV=production
+
+# Worker de publication (exécuté par tsx : pas d'étape de compilation séparée).
+FROM deps AS worker
+ENV NODE_ENV=production
+RUN mkdir -p /data/media && chown node:node /data/media
+USER node
+WORKDIR /app/apps/worker
+# Node directement (pas pnpm) : SIGTERM atteint le worker, qui termine ses envois avant de s'arrêter.
+CMD ["node", "--import", "tsx", "src/main.ts"]
 
 FROM deps AS build
 ENV NEXT_TELEMETRY_DISABLED=1

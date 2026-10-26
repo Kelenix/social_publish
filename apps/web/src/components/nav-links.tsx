@@ -2,13 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, Image as ImageIcon, LayoutDashboard, Settings } from "lucide-react";
+import { CalendarDays, FileText, History, Image as ImageIcon, LayoutDashboard, Link2, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/publications", label: "Publications", icon: FileText },
+  { href: "/calendrier", label: "Calendrier", icon: CalendarDays },
+  { href: "/historique", label: "Historique", icon: History },
   { href: "/medias", label: "Médias", icon: ImageIcon },
+  { href: "/comptes", label: "Comptes", icon: Link2 },
   { href: "/reglages", label: "Réglages", icon: Settings },
 ];
 

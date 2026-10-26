@@ -4,7 +4,9 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { PLATFORM_FIELDS, PLATFORM_LABELS, PLATFORMS, type PlatformId } from "@app/core/platforms";
 import { composeCaption, parseHashtags, resolveVariant, type ParsedPostInput, type PostInput } from "@app/core/posts/schema";
+import { SIMULATION_SCENARIOS } from "@app/core/connectors/scenarios";
 import { saveDraftAction } from "@/app/(app)/publications/actions";
+import { SchedulePanel, type AccountOption } from "@/components/schedule-panel";
 import { MediaPicker } from "@/components/media-picker";
 import { MediaThumb } from "@/components/media-grid";
 import { Badge } from "@/components/ui/badge";
@@ -14,8 +16,8 @@ import { Hint, Input, Label, Select, Textarea } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import type { MediaView } from "@/lib/views";
 
-type VariantDraft = { text: string; title: string; description: string; hashtags: string; mediaIds: string[] };
-const emptyVariant: VariantDraft = { text: "", title: "", description: "", hashtags: "", mediaIds: [] };
+type VariantDraft = { text: string; title: string; description: string; hashtags: string; mediaIds: string[]; options: Record<string, unknown> };
+const emptyVariant: VariantDraft = { text: "", title: "", description: "", hashtags: "", mediaIds: [], options: {} };
 
 type Props = {
   postId: string | null;
@@ -24,11 +26,13 @@ type Props = {
   library: MediaView[];
   timezones: string[];
   editable: boolean;
+  /** Comptes prêts, proposés pour programmer (absent : pas de programmation possible ici). */
+  accounts?: AccountOption[];
 };
 
 const FIELD_LABELS = { text: "Texte", title: "Titre", description: "Description" } as const;
 
-export function PostEditor({ postId, version, initial, library, timezones, editable }: Props) {
+export function PostEditor({ postId, version, initial, library, timezones, editable, accounts }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ tone: "success" | "danger"; text: string } | null>(null);
@@ -48,6 +52,7 @@ export function PostEditor({ postId, version, initial, library, timezones, edita
         description: v.description ?? "",
         hashtags: v.hashtags.map((t) => `#${t}`).join(" "),
         mediaIds: v.mediaIds,
+        options: v.options,
       };
     }
     return map;
@@ -63,7 +68,7 @@ export function PostEditor({ postId, version, initial, library, timezones, edita
     timezone,
     variants: selected.map((platform) => {
       const v = variants[platform];
-      return { platform, enabled: true, text: v.text, title: v.title, description: v.description, hashtags: parseHashtags(v.hashtags), mediaIds: v.mediaIds };
+      return { platform, enabled: true, text: v.text, title: v.title, description: v.description, hashtags: parseHashtags(v.hashtags), mediaIds: v.mediaIds, options: v.options as Record<string, never> };
     }),
   });
 
@@ -73,14 +78,23 @@ export function PostEditor({ postId, version, initial, library, timezones, edita
   };
   const updateVariant = (p: PlatformId, patch: Partial<VariantDraft>) => setVariants((prev) => ({ ...prev, [p]: { ...prev[p], ...patch } }));
 
-  function save() {
+  /** Enregistre le brouillon ; renvoie son identifiant, ou null en cas d'erreur. */
+  async function persist(): Promise<string | null> {
     setMessage(null);
+    const result = await saveDraftAction(postId, toInput());
+    if (!result.ok) {
+      setMessage({ tone: "danger", text: result.error });
+      return null;
+    }
+    setMessage({ tone: "success", text: `Brouillon enregistré (version ${result.version}).` });
+    return result.id;
+  }
+
+  function save() {
     startTransition(async () => {
-      const result = await saveDraftAction(postId, toInput());
-      if (!result.ok) return setMessage({ tone: "danger", text: result.error });
-      setMessage({ tone: "success", text: `Brouillon enregistré (version ${result.version}).` });
-      if (!postId) router.replace(`/publications/${result.id}`);
-      else router.refresh();
+      const id = await persist();
+      if (id && !postId) router.replace(`/publications/${id}`);
+      else if (id) router.refresh();
     });
   }
 
@@ -186,6 +200,24 @@ export function PostEditor({ postId, version, initial, library, timezones, edita
                     </div>
                   );
                 })}
+                {activeTab === "TEST" && (
+                  <div>
+                    <Label htmlFor="TEST-simulate">Scénario simulé</Label>
+                    <Select
+                      id="TEST-simulate"
+                      value={String(variants.TEST.options.simulate ?? "")}
+                      onChange={(e) => updateVariant("TEST", { options: e.target.value ? { simulate: e.target.value } : {} })}
+                    >
+                      <option value="">Selon le compte (réussite par défaut)</option>
+                      {Object.entries(SIMULATION_SCENARIOS).map(([key, label]) => (
+                        <option key={key} value={key}>
+                          {label}
+                        </option>
+                      ))}
+                    </Select>
+                    <Hint>Simulation locale : rien n&apos;est envoyé à un réseau social.</Hint>
+                  </div>
+                )}
                 <div>
                   <Label htmlFor={`${activeTab}-hashtags`}>Hashtags spécifiques</Label>
                   <Input id={`${activeTab}-hashtags`} value={variants[activeTab].hashtags} placeholder={hashtags} onChange={(e) => updateVariant(activeTab, { hashtags: e.target.value })} />
@@ -224,6 +256,8 @@ export function PostEditor({ postId, version, initial, library, timezones, edita
             </p>
           )}
         </Card>
+
+        {editable && accounts && <SchedulePanel accounts={accounts} platforms={selected} timezone={timezone} save={persist} />}
 
         <Card className="space-y-4">
           <CardTitle>Aperçu</CardTitle>

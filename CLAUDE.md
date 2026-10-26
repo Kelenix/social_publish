@@ -14,9 +14,10 @@ Vercel : la règle « RLS obligatoire » ci-dessous est remplacée par l'autoris
 | Paquet | Rôle |
 |--------|------|
 | `packages/db` | Schéma Prisma, migrations, client (`prisma`, créé à la première utilisation) |
-| `packages/core` | Logique métier partagée web / worker / MCP : config, auth, audit, stockage (local \| S3), médias (ffprobe), publications (schéma Zod pur + service) |
+| `packages/core` | Logique métier partagée web / worker / MCP : config, auth, audit, stockage (local \| S3), médias (ffprobe), publications (schéma Zod pur + service), connecteurs (`connectors/`), programmation et exécution (`scheduling/`), fuseaux (`time.ts`) |
 | `apps/web` | Interface + API (Next.js, sortie standalone) |
-| `apps/worker`, `apps/mcp` | Incréments 2 et 3 |
+| `apps/worker` | Répartiteur (PostgreSQL → BullMQ) + exécution des destinations |
+| `apps/mcp` | Incrément 3 |
 
 Conventions :
 - Toute logique de publication vit dans `packages/core` ; les apps n'appellent que ses fonctions.
@@ -25,6 +26,11 @@ Conventions :
   qu'une redirection de confort.
 - Une modification du contenu publiable incrémente `Post.version` (empreinte `contentFingerprint`).
 - Toute action notable écrit dans `AuditLog` (jamais de secret dans `meta`).
+- PostgreSQL est la source de vérité des programmations ; seul le worker parle à Redis.
+- Toute transaction qui modifie des destinations commence par `lockPost` (ordre publication → destinations).
+- Un connecteur signale ses erreurs avec `ConnectorError` (`retryable` / `fatal` / `auth` / `permission` /
+  `uncertain`) et déclare ses `Capabilities` : la validation et l'interface en dépendent.
+- Le connecteur `test` est une simulation : toujours étiqueté comme tel, jamais présenté comme un réseau.
 - Textes d'interface en français.
 
 ## Commandes

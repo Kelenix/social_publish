@@ -12,7 +12,13 @@
     "./posts": "./src/posts/service.ts",
     "./posts/schema": "./src/posts/schema.ts",
     "./platforms": "./src/platforms.ts",
-    "./settings": "./src/settings.ts"
+    "./settings": "./src/settings.ts",
+    "./time": "./src/time.ts",
+    "./connectors": "./src/connectors/index.ts",
+    "./connectors/scenarios": "./src/connectors/scenarios.ts",
+    "./scheduling": "./src/scheduling/service.ts",
+    "./scheduling/executor": "./src/scheduling/executor.ts",
+    "./scheduling/status": "./src/scheduling/status.ts"
   },
   "scripts": {
     "admin:bootstrap": "tsx scripts/bootstrap-admin.ts",

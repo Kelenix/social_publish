@@ -3,10 +3,12 @@
 Outil personnel pour préparer, programmer et suivre des publications Instagram, TikTok, YouTube, X et
 LinkedIn, depuis une interface web et (à venir) depuis Claude Code via un serveur MCP.
 
-> **État : incrément 1 sur 6.** Disponibles : connexion administrateur, bibliothèque de médias,
-> brouillons avec variantes par plateforme et aperçu. La programmation, le worker, le serveur MCP et
-> les connecteurs réels arrivent dans les incréments suivants (voir `docs/plan-de-realisation.md`).
-> Aucune publication n'est envoyée à un réseau social à ce stade.
+> **État : incrément 2 sur 6.** Disponibles : connexion administrateur, bibliothèque de médias,
+> brouillons avec variantes, aperçu, publication immédiate et programmée, worker, calendrier,
+> historique, et un **connecteur de test (simulation)**. Le serveur MCP et les connecteurs réels
+> arrivent ensuite (voir `docs/plan-de-realisation.md`).
+> **Aucun réseau social réel n'est connecté à ce stade** : seul le connecteur de simulation publie,
+> dans la base locale.
 
 ## Prérequis
 
@@ -22,12 +24,34 @@ LinkedIn, depuis une interface web et (à venir) depuis Claude Code via un serve
    ```bash
    docker compose up --build
    ```
-3. Ouvrir http://localhost:3000 et se connecter.
+3. Ouvrir http://localhost:3000 et se connecter avec `ADMIN_EMAIL` et `ADMIN_INITIAL_PASSWORD`
+   (le compte est créé automatiquement au premier démarrage ; il n'y a pas de page d'inscription).
 4. Après la première connexion, vider `ADMIN_INITIAL_PASSWORD` dans `.env` (le compte existe déjà ;
    le mot de passe se change dans **Réglages**).
 
 Les services ne sont publiés que sur `127.0.0.1`. PostgreSQL n'est pas exposé (sauf override de
 développement `compose.dev.yaml`, également limité à `127.0.0.1`).
+
+## Programmation
+
+- Les dates sont stockées en UTC avec le fuseau choisi (Europe/Rome par défaut). Une heure qui
+  n'existe pas (passage à l'heure d'été) est refusée avec une proposition ; une heure qui existe
+  deux fois (passage à l'heure d'hiver) demande de choisir laquelle.
+- Programmer ou publier vaut **autorisation** pour la version enregistrée, ces comptes et cette
+  date. Pour modifier ensuite : annuler la programmation (la publication redevient un brouillon).
+- Chaque destination (compte) a son propre état : un échec n'entraîne jamais de nouvel envoi vers
+  une destination déjà publiée.
+- **La programmation locale exige un ordinateur allumé, connecté, sans veille, avec Docker actif.**
+  Une publication manquée pendant un arrêt suit la règle des Réglages (par défaut : te demander de
+  la reprogrammer).
+- Un envoi dont le résultat est inconnu (coupure, délai dépassé) passe en **Résultat incertain** :
+  vérification auprès de la plateforme avant tout nouvel envoi, sinon décision manuelle.
+
+### Connecteur de test
+
+Dans **Comptes**, ajoute un compte de test et choisis son comportement (réussite, erreur
+temporaire, quota, résultat incertain, jeton expiré…). Le scénario peut aussi se choisir par
+publication dans la variante « Test (simulation) ». Rien n'est envoyé à l'extérieur.
 
 ## Données
 
@@ -35,6 +59,7 @@ développement `compose.dev.yaml`, également limité à `127.0.0.1`).
 |---------------|---------|
 | `pgdata` | Base PostgreSQL (source de vérité) |
 | `media` | Originaux importés et vignettes (`/data/media`) |
+| `redisdata` | File d'exécution (reconstructible à partir de PostgreSQL) |
 
 Les médias importés sont analysés par ffprobe (le type réel est lu dans le fichier, pas dans
 l'extension), puis copiés dans le stockage de l'application : une publication ne dépend jamais du

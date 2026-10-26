@@ -31,6 +31,19 @@ services:
       timeout: 5s
       retries: 20
 
+  # Exécution des jobs uniquement : la source de vérité reste PostgreSQL.
+  redis:
+    image: redis:8.2-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   # Applique les migrations puis crée l'administrateur s'il n'existe pas, et s'arrête.
   migrate:
     build: { context: ., target: tools }
@@ -60,6 +73,29 @@ services:
       retries: 5
       start_period: 20s
 
+  worker:
+    build: { context: ., target: worker }
+    restart: unless-stopped
+    init: true
+    environment:
+      <<: *app-env
+      REDIS_URL: redis://redis:6379
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-4}
+    volumes:
+      - media:/data/media
+    # Laisse le temps aux envois en cours de se terminer à l'arrêt.
+    stop_grace_period: 60s
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "find /tmp/worker-heartbeat -mmin -1 | grep -q ."]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 30s
+
 volumes:
   pgdata:
+  redisdata:
   media:

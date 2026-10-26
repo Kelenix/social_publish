@@ -8,6 +8,7 @@ export const POST_STATUS: Record<PostStatus, { label: string; tone: "neutral" | 
   PARTIAL: { label: "Partielle", tone: "warning" },
   FAILED: { label: "Échec", tone: "danger" },
   CANCELLED: { label: "Annulée", tone: "neutral" },
+  NEEDS_ATTENTION: { label: "À vérifier", tone: "warning" },
 };
 
 export const timezones = (): string[] => Intl.supportedValuesOf("timeZone");

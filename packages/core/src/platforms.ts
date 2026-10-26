@@ -1,5 +1,7 @@
 /** Plateformes ciblées. Module pur : utilisable côté client. */
-export const PLATFORMS = ["INSTAGRAM", "TIKTOK", "YOUTUBE", "X", "LINKEDIN"] as const;
+export const PLATFORMS = ["INSTAGRAM", "TIKTOK", "YOUTUBE", "X", "LINKEDIN", "TEST"] as const;
+/** Réseaux réels (hors simulation). */
+export const REAL_PLATFORMS = ["INSTAGRAM", "TIKTOK", "YOUTUBE", "X", "LINKEDIN"] as const;
 export type PlatformId = (typeof PLATFORMS)[number];
 
 export const PLATFORM_LABELS: Record<PlatformId, string> = {
@@ -8,6 +10,7 @@ export const PLATFORM_LABELS: Record<PlatformId, string> = {
   YOUTUBE: "YouTube",
   X: "X",
   LINKEDIN: "LinkedIn",
+  TEST: "Test (simulation)",
 };
 
 /**
@@ -20,4 +23,5 @@ export const PLATFORM_FIELDS: Record<PlatformId, readonly ("text" | "title" | "d
   YOUTUBE: ["title", "description"],
   X: ["text"],
   LINKEDIN: ["text"],
+  TEST: ["text", "title"],
 };

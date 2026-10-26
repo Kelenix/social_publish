@@ -4,6 +4,42 @@
 
 ---
 
+## ADR-010 — Verrou de publication avant toute modification de ses destinations
+
+- **Date** : 2026-10-26
+- **Statut** : Accepté
+- **Décideur** : Claude (backend-engineer, suite à un défaut trouvé en test de bout en bout)
+- **Contexte** : Deux destinations terminées au même instant recalculaient l'état global chacune sans voir l'autre (lecture « read committed ») : la publication restait « En cours » au lieu de « Partielle ».
+- **Décision** : `lockPost` (`SELECT … FOR UPDATE` sur la publication) en tête de chaque transaction qui modifie des destinations, puis recalcul. Ordre unique publication → destinations (pas d'interblocage entre worker et interface). Test de régression ajouté.
+- **Conséquences** : les fins de destinations d'une même publication sont sérialisées (coût négligeable).
+- **Impact** : fiabilité
+
+## ADR-009 — Résultat incertain, rapprochement et publications manquées
+
+- **Date** : 2026-10-26
+- **Statut** : Accepté
+- **Décideur** : Claude (system-design)
+- **Contexte** : L'INTAKE exige de ne jamais créer de doublon par une nouvelle tentative et de ne pas promettre « exactement une fois ».
+- **Décision** :
+  - Prise atomique d'une destination (`updateMany` conditionnel sur l'état, la date et le bail) : un seul exécutant possible, même avec des jobs en double.
+  - Erreur « temporaire » = la plateforme n'a pas publié → nouvel essai avec backoff exponentiel (1 min → 1 h) ou `Retry-After` s'il est plus long ; quota mémorisé sur le compte. Abandon après 5 tentatives.
+  - Délai dépassé après envoi, erreur inattendue ou worker arrêté en plein envoi (bail de 10 min expiré) → **Résultat incertain**. Si le connecteur sait retrouver une publication (clé d'idempotence), rapprochement automatique après 30 s : trouvée → publiée ; absente → nouvel envoi. Sinon décision manuelle (« c'est bien publié » / « renvoyer quand même », avec avertissement de doublon).
+  - Publication jamais tentée en retard de plus de 10 min (worker arrêté) → politique des réglages : « me demander » (défaut, état *Manquée*), « publier si retard < 2 h », « annuler ».
+  - Toute exécution vérifie que la version du contenu est celle qui a été autorisée.
+- **Conséquences** : garantie « au plus une fois » quand le connecteur sait rapprocher ; sinon décision humaine explicite. Documenté pour chaque connecteur.
+- **Impact** : métier / fiabilité (fort)
+
+## ADR-008 — PostgreSQL source de vérité, Redis pour l'exécution
+
+- **Date** : 2026-10-26
+- **Statut** : Accepté
+- **Décideur** : Claude (system-design)
+- **Contexte** : Les programmations doivent survivre à un redémarrage, et Redis ne doit pas être indispensable à la cohérence.
+- **Décision** : L'interface (et le MCP) n'écrivent que dans PostgreSQL. Le worker, toutes les 5 s : battement de vie, reprise des envois interrompus, politique des publications manquées, puis création des jobs BullMQ (identifiant déterministe, délai jusqu'à l'échéance) pour les destinations dues dans la minute. BullMQ 5.81.5 + ioredis 5.11.1 ; Redis 8.2 en AOF, non exposé.
+- **Alternatives écartées** : jobs différés créés par l'interface (file à reconstruire, deux sources de vérité) ; BullMQ 6 (une semaine d'existence).
+- **Conséquences** : latence maximale de « Publier maintenant » ≈ 5 s ; perte de Redis sans conséquence (reconstruction au cycle suivant). Le worker est lancé par `node --import tsx` (signal d'arrêt reçu, envois en cours terminés).
+- **Impact** : technique / fiabilité
+
 ## ADR-007 — Base de test non réinitialisée automatiquement
 
 - **Date** : 2026-10-26
