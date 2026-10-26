@@ -138,6 +138,8 @@ export interface Connector {
   simulated?: boolean;
   /** Publication automatique impossible : export du contenu pour publication manuelle. */
   manualOnly?: boolean;
+  /** La plateforme exige une URL de retour OAuth en HTTPS : retour par PUBLIC_BASE_URL. */
+  httpsRedirect?: boolean;
   isConfigured(): boolean;
   capabilities(account?: ConnectedAccount): Capabilities;
   publish(ctx: PublishContext): Promise<PublishResult>;

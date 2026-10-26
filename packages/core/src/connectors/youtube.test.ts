@@ -196,10 +196,10 @@ describe.skipIf(!enabled)("connecteur YouTube (contrat, faux serveur Google)", a
     });
 
     it("refuse un state inconnu et n'accepte un state qu'une seule fois", async () => {
-      await expect(oauth.completeAuthorization("youtube", { code: "good-code", state: "faux" }, "test")).rejects.toThrow(oauth.OAuthFlowError);
+      await expect(oauth.completeAuthorization("youtube", { code: "good-code", state: "faux" })).rejects.toThrow(oauth.OAuthFlowError);
       const { state } = await connect();
-      account = await oauth.completeAuthorization("youtube", { code: "good-code", state }, "test");
-      await expect(oauth.completeAuthorization("youtube", { code: "good-code", state }, "test")).rejects.toThrow(oauth.OAuthFlowError);
+      account = await oauth.completeAuthorization("youtube", { code: "good-code", state });
+      await expect(oauth.completeAuthorization("youtube", { code: "good-code", state })).rejects.toThrow(oauth.OAuthFlowError);
     });
 
     it("enregistre le compte avec des jetons chiffrés", async () => {
@@ -213,16 +213,16 @@ describe.skipIf(!enabled)("connecteur YouTube (contrat, faux serveur Google)", a
     it("signale une permission manquante si une portée n'est pas accordée", async () => {
       fake.state.scope = "https://www.googleapis.com/auth/youtube.upload";
       const { state } = await connect();
-      const partial = await oauth.completeAuthorization("youtube", { code: "good-code", state }, "test");
+      const partial = await oauth.completeAuthorization("youtube", { code: "good-code", state });
       expect(partial.status).toBe("PERMISSION_MISSING");
       fake.state.scope = "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.force-ssl";
       const { state: again } = await connect();
-      account = await oauth.completeAuthorization("youtube", { code: "good-code", state: again }, "test");
+      account = await oauth.completeAuthorization("youtube", { code: "good-code", state: again });
       expect(account.status).toBe("READY");
     });
 
     it("rapporte un refus de l'utilisateur", async () => {
-      await expect(oauth.completeAuthorization("youtube", { error: "access_denied" }, "test")).rejects.toThrow("Autorisation refusée");
+      await expect(oauth.completeAuthorization("youtube", { error: "access_denied" })).rejects.toThrow("Autorisation refusée");
     });
   });
 
@@ -310,7 +310,7 @@ describe.skipIf(!enabled)("connecteur YouTube (contrat, faux serveur Google)", a
       expect((await prisma.connectedAccount.findUniqueOrThrow({ where: { id: account.id } })).status).toBe("RECONNECT_REQUIRED");
       // Reconnexion pour la suite des tests.
       const { state } = await connect();
-      account = await oauth.completeAuthorization("youtube", { code: "good-code", state }, "test");
+      account = await oauth.completeAuthorization("youtube", { code: "good-code", state });
     });
 
     it("quota d'uploads épuisé : attente jusqu'à la réinitialisation, sans échec définitif", async () => {

@@ -208,7 +208,7 @@ describe.skipIf(!enabled)("connecteurs Instagram, LinkedIn, X (contrat)", async 
   async function connect(connector: string) {
     const url = new URL(await oauth.startAuthorization(connector, "test"));
     if (url.searchParams.get("code_challenge")) fake.state.xChallenges.push(url.searchParams.get("code_challenge")!);
-    return { url, account: await oauth.completeAuthorization(connector, { code: "code", state: url.searchParams.get("state") }, "test") };
+    return { url, account: await oauth.completeAuthorization(connector, { code: "code", state: url.searchParams.get("state") }) };
   }
   async function scheduleNow(accountId: string, input: Parameters<typeof posts.createDraft>[0]) {
     const post = await posts.createDraft(input, "test");
@@ -243,8 +243,14 @@ describe.skipIf(!enabled)("connecteurs Instagram, LinkedIn, X (contrat)", async 
       expect(instagramConnector.isConfigured()).toBe(true);
     });
 
+    it("passe par l'adresse publique HTTPS pour l'URL de retour", () => {
+      expect(oauth.redirectUriFor("instagram")).toBe("https://studio.example.com/api/oauth/instagram/callback");
+      expect(oauth.redirectUriFor("linkedin")).toMatch(/^http:\/\/localhost:3000\/api\/oauth\/linkedin\/callback$/);
+    });
+
     it("connecte un compte professionnel avec un jeton longue durée chiffré", async () => {
       const { url, account } = await connect("instagram");
+      expect(url.searchParams.get("redirect_uri")).toBe("https://studio.example.com/api/oauth/instagram/callback");
       expect(url.searchParams.get("scope")).toBe("instagram_business_basic,instagram_business_content_publish");
       expect(account).toMatchObject({ platform: "INSTAGRAM", externalId: "17841", displayName: "@studio_test", status: "READY" });
       expect(readCredentials<{ accessToken: string }>(account).accessToken).toBe("ig-long");

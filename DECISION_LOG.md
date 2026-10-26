@@ -4,6 +4,20 @@
 
 ---
 
+## ADR-018 — Retour OAuth par l'adresse publique HTTPS, prouvé par le state
+
+- **Date** : 2026-10-26
+- **Statut** : Accepté
+- **Décideur** : Claude (security-engineer), suite à un essai réel : Instagram n'appelait jamais l'URL de retour `http://localhost`.
+- **Décision** :
+  - Un connecteur peut exiger une URL de retour HTTPS (`httpsRedirect`, Instagram) : elle est construite sur `PUBLIC_BASE_URL`.
+  - Le retour OAuth n'exige plus la session du navigateur (le domaine du tunnel n'a pas le cookie) : le `state` (256 bits, haché, usage unique, 10 min, créé uniquement par l'administrateur connecté) prouve l'origine ; l'auteur journalisé est celui qui a créé le state. Redirection finale vers `APP_URL`.
+- **Alternatives écartées** : imposer `APP_URL` = tunnel (cookies, actions serveur et Origin à reconfigurer, adresse changeante) ; cookie partagé entre domaines (impossible).
+- **Conséquences** : un tiers sans state valide ne peut rien lier ; un state intercepté (dans l'URL du navigateur de l'administrateur) ne sert qu'une fois et 10 minutes au plus.
+- **Impact** : sécurité (faible à moyen)
+
+---
+
 ## ADR-017 — Modèles de workflow
 
 - **Date** : 2026-10-26

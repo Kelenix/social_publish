@@ -39,11 +39,14 @@ Business ou Créateur — sans page Facebook).
 2. Ajouter le produit **Instagram** → « API setup with Instagram business login ».
 3. Récupérer l'**Instagram App ID** et l'**Instagram App Secret** (ce ne sont pas ceux de
    l'application Facebook).
-4. **Business login settings → OAuth redirect URIs** : l'URL affichée dans Comptes. Meta exige en
-   pratique une URL **HTTPS** : ouvre alors le Studio par ton adresse publique et mets
-   `APP_URL=PUBLIC_BASE_URL` dans `.env` (sinon l'URL de retour serait en `http://localhost`).
-5. Ajouter ton compte Instagram comme **testeur** (rôles de l'application) et accepter l'invitation
-   dans Instagram (Paramètres → Applications et sites web).
+4. **Configurez la connexion professionnelle Instagram → Business login settings → OAuth redirect
+   URIs** : l'URL affichée dans Comptes. Pour Instagram, le Studio la construit automatiquement sur
+   `PUBLIC_BASE_URL` (HTTPS) : `https://<ton-adresse-publique>/api/oauth/instagram/callback`. Après la
+   connexion, Instagram revient par le tunnel et le Studio te renvoie sur `APP_URL`. Avec un tunnel
+   rapide, l'adresse change à chaque lancement : il faut alors la redéclarer chez Meta.
+5. Ajouter ton compte Instagram comme **testeur** (onglet Rôles de l'application) et accepter
+   l'invitation dans Instagram (Paramètres → Applications et sites web → Invitations de testeur).
+   La section **webhooks** n'est pas nécessaire.
 6. `.env` : `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET`, `PUBLIC_BASE_URL`, puis **Comptes →
    Connecter un compte Instagram**.
 

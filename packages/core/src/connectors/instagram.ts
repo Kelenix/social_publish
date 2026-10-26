@@ -139,6 +139,7 @@ export const instagramConnector: Connector = {
   id: "instagram",
   platform: "INSTAGRAM",
   label: "Instagram",
+  httpsRedirect: true,
   isConfigured: () => Boolean(env().appId && env().appSecret && hasEncryptionKey() && !publicMediaProblem()),
 
   capabilities(): Capabilities {

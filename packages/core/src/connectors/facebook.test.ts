@@ -155,7 +155,7 @@ describe.skipIf(!enabled)("connecteur Facebook (contrat, faux serveur Graph)", a
   it("connecte les Pages gérées ; une Page sans droit de publication est signalée", async () => {
     const url = new URL(await oauth.startAuthorization("facebook", "test"));
     expect(url.searchParams.get("scope")).toBe("pages_show_list,pages_read_engagement,pages_manage_posts");
-    const page = await oauth.completeAuthorization("facebook", { code: "c", state: url.searchParams.get("state") }, "test");
+    const page = await oauth.completeAuthorization("facebook", { code: "c", state: url.searchParams.get("state") });
     expect(page).toMatchObject({ platform: "FACEBOOK", externalId: "111", displayName: "Ma Page", status: "READY" });
     expect(page.credentials).not.toContain("page-token-secret");
     const other = await prisma.connectedAccount.findFirstOrThrow({ where: { connector: "facebook", externalId: "222" } });

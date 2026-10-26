@@ -13,6 +13,11 @@ function settings() {
   return { base: base.replace(/\/+$/, ""), key };
 }
 
+/** Adresse HTTPS publique de l'application, ou null si elle n'est pas utilisable. */
+export function publicBaseUrl(): string | null {
+  return publicMediaProblem() ? null : settings().base;
+}
+
 /** Raison pour laquelle les URLs publiques sont indisponibles, ou null si tout est prêt. */
 export function publicMediaProblem(): string | null {
   const { base, key } = settings();
