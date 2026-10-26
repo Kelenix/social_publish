@@ -6,7 +6,7 @@ import { PLATFORM_FIELDS, PLATFORM_LABELS, PLATFORMS, type PlatformId } from "@a
 import { composeCaption, parseHashtags, resolveVariant, type ParsedPostInput, type PostInput } from "@app/core/posts/schema";
 import { SIMULATION_SCENARIOS } from "@app/core/connectors/scenarios";
 import { saveDraftAction } from "@/app/(app)/publications/actions";
-import { SchedulePanel, type AccountOption } from "@/components/schedule-panel";
+import { SchedulePanel, type AccountOption, type ScheduleDefaults } from "@/components/schedule-panel";
 import { YouTubeOptions } from "@/components/youtube-options";
 import { FacebookOptions, InstagramOptions, LinkedInOptions } from "@/components/platform-options";
 import { MediaPicker } from "@/components/media-picker";
@@ -30,11 +30,13 @@ type Props = {
   editable: boolean;
   /** Comptes prêts, proposés pour programmer (absent : pas de programmation possible ici). */
   accounts?: AccountOption[];
+  /** Présélections de programmation d'un modèle en mode « Rapide ». */
+  scheduleDefaults?: ScheduleDefaults;
 };
 
 const FIELD_LABELS = { text: "Texte", title: "Titre", description: "Description" } as const;
 
-export function PostEditor({ postId, version, initial, library, timezones, editable, accounts }: Props) {
+export function PostEditor({ postId, version, initial, library, timezones, editable, accounts, scheduleDefaults }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ tone: "success" | "danger"; text: string } | null>(null);
@@ -68,6 +70,7 @@ export function PostEditor({ postId, version, initial, library, timezones, edita
     hashtags: parseHashtags(hashtags),
     mediaIds,
     timezone,
+    templateId: initial.templateId,
     variants: selected.map((platform) => {
       const v = variants[platform];
       return { platform, enabled: true, text: v.text, title: v.title, description: v.description, hashtags: parseHashtags(v.hashtags), mediaIds: v.mediaIds, options: v.options as Record<string, never> };
@@ -263,7 +266,7 @@ export function PostEditor({ postId, version, initial, library, timezones, edita
           )}
         </Card>
 
-        {editable && accounts && <SchedulePanel accounts={accounts} platforms={selected} timezone={timezone} save={persist} />}
+        {editable && accounts && <SchedulePanel accounts={accounts} platforms={selected} timezone={timezone} save={persist} defaults={scheduleDefaults} />}
 
         <Card className="space-y-4">
           <CardTitle>Aperçu</CardTitle>

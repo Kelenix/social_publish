@@ -15,6 +15,7 @@
     "./settings": "./src/settings.ts",
     "./time": "./src/time.ts",
     "./tokens": "./src/tokens.ts",
+    "./workflows": "./src/workflows.ts",
     "./tokens/scopes": "./src/tokens-scopes.ts",
     "./operations": "./src/operations.ts",
     "./connectors": "./src/connectors/index.ts",

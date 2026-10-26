@@ -8,6 +8,8 @@ import { composeCaption, resolveVariant } from "@app/core/posts/schema";
 import { listAccounts, listDestinations } from "@app/core/scheduling";
 import { ACTIVE_STATUSES } from "@app/core/scheduling/status";
 import { getSettings } from "@app/core/settings";
+import { getTemplate } from "@app/core/workflows";
+import { scheduleDefaultsFor } from "@/lib/templates";
 import { CancelScheduleButton } from "@/components/cancel-schedule-button";
 import { ManualExport, type ManualExportView } from "@/components/manual-export";
 import { DestinationList } from "@/components/destination-list";
@@ -95,6 +97,7 @@ export default async function PostPage({ params }: PageProps<"/publications/[id]
         timezones={timezones()}
         editable={post.status === "DRAFT"}
         accounts={toAccountOptions(accounts)}
+        scheduleDefaults={post.status === "DRAFT" && post.templateId ? await scheduleDefaultsFor(await getTemplate(post.templateId)) : undefined}
       />
     </>
   );

@@ -91,6 +91,24 @@ test("parcours complet avec le connecteur de simulation", async ({ page }) => {
   }).toPass({ timeout: 45_000 });
   await expect(page.getByText(/simulation:\/\/publication\//)).toBeVisible();
 
+  // Modèle de workflow en mode « Rapide » : comptes et horaire présélectionnés.
+  await nav(page, "Modèles");
+  await page.getByLabel("Nom").fill(`Modèle ${run}`);
+  await page.getByLabel("Heure habituelle de publication").fill("18:00");
+  await page.getByRole("checkbox", { name: new RegExp(`E2E ${run}`) }).check();
+  await page.getByRole("radio", { name: /Rapide/ }).check();
+  await page.getByRole("button", { name: "Enregistrer le modèle" }).click();
+  const item = page.locator("li", { hasText: `Modèle ${run}` });
+  await expect(item).toBeVisible();
+  await item.getByRole("link", { name: "Nouvelle publication" }).click();
+  await expect(page.getByText(`Modèle : Modèle ${run}`)).toBeVisible();
+  await expect(page.getByText(`Présélection du modèle « Modèle ${run} »`)).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: new RegExp(`E2E ${run}`) })).toBeChecked();
+  await expect(page.getByLabel("Date et heure")).toHaveValue(/T18:00$/);
+  await nav(page, "Modèles");
+  await page.locator("li", { hasText: `Modèle ${run}` }).getByRole("button", { name: "Supprimer" }).click();
+  await expect(page.locator("li", { hasText: `Modèle ${run}` })).toHaveCount(0);
+
   // Historique et calendrier.
   await nav(page, "Historique");
   await expect(page.getByRole("link", { name: `Parcours E2E ${run}` }).first()).toBeVisible();

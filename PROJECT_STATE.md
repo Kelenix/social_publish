@@ -33,7 +33,7 @@
 | Inc-4 | Premier connecteur réel (OAuth) : YouTube | §5 | P1 | ✅ tests de contrat ; ⏸️ test réel (identifiants) |
 | Inc-5 | Autres connecteurs + TikTok manuel | §5 | P1 | ✅ tests de contrat ; ⏸️ tests réels (identifiants) |
 | Inc-6 | Vérification complète + documentation | §1, §10, §11 | P0 | ✅ |
-| Inc-7 | Modèles de workflow enregistrables (comptes, formats, fuseau, mode de validation) | §3, §6 | P1 | ⬜ non fait |
+| Inc-7 | Modèles de workflow enregistrables (comptes, formats, fuseau, mode de validation) | §3, §6 | P1 | ✅ |
 
 ## Décisions ouvertes / questions à l'utilisateur
 
@@ -49,6 +49,8 @@
 - voir `docs/manual-tasks.md`
 
 ## Journal de session
+
+- 2026-10-26 — Facebook commité (`e86a2b9`). Modèles de workflow sur `feat/modeles-workflow` (non commité) : schéma + migration, service, page Modèles, application dans l'éditeur et la programmation (mode Rapide), outils MCP. Vérifié : 184 tests (dont 4 modèles, 1 MCP modèle), E2E 2/2 avec le parcours modèle, stack Docker healthy. Aussi : URL de retour OAuth affichée en permanence dans Comptes ; aide à la configuration LinkedIn (URL de retour) et Instagram (`PUBLIC_BASE_URL` valait `http://localhost:3000`, inutilisable par Instagram).
 
 - 2026-10-26 — Inc-6 commité (`6cd4c4f`). Connecteur Facebook (Pages) ajouté à la demande de l'utilisateur, sur `feat/facebook` (non commité) : doc Meta vérifiée, OAuth + jetons de Page chiffrés, texte/photos/vidéo, programmation native + annulation, rapprochement. Vérifié : 179 tests dont 9 de contrat Facebook (défaut trouvé et corrigé : sauts de ligne en multipart), stack Docker healthy, page Comptes. Non vérifié : vraie API Facebook.
 

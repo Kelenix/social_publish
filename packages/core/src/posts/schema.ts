@@ -56,6 +56,8 @@ export const postInputSchema = z.object({
     .default([])
     .refine((ids) => new Set(ids).size === ids.length, "Média en double."),
   timezone: z.string().refine(isValidTimeZone, "Fuseau horaire IANA invalide.").default("Europe/Rome"),
+  /** Modèle de workflow d'origine (présélections de programmation) ; ne fait pas partie du contenu. */
+  templateId: z.uuid().nullish().transform((v) => v ?? null),
   variants: z
     .array(variantInputSchema)
     .default([])

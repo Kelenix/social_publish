@@ -20,6 +20,7 @@ export function toInput(post: PostWithContent): ParsedPostInput {
     hashtags: post.hashtags,
     mediaIds: post.media.map((m) => m.mediaId),
     timezone: post.timezone,
+    templateId: post.templateId,
     variants: post.variants.map((v) => ({
       platform: v.platform,
       enabled: v.enabled,
@@ -54,7 +55,7 @@ export async function createDraft(raw: PostInput, actor: string): Promise<PostWi
   return prisma.$transaction(async (tx) => {
     await assertMediaExist(tx, input);
     const post = await tx.post.create({
-      data: { title: input.title, body: input.body, hashtags: input.hashtags, timezone: input.timezone, ...contentData(input) },
+      data: { title: input.title, body: input.body, hashtags: input.hashtags, timezone: input.timezone, templateId: input.templateId, ...contentData(input) },
       include: postInclude,
     });
     await audit({ actor, action: "post.create", entity: "post", entityId: post.id }, tx);
@@ -82,6 +83,7 @@ export async function updateDraft(id: string, raw: PostInput, actor: string): Pr
         body: input.body,
         hashtags: input.hashtags,
         timezone: input.timezone,
+        templateId: input.templateId,
         version: changed ? { increment: 1 } : undefined,
         ...contentData(input),
       },

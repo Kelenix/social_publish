@@ -103,6 +103,7 @@ describe.skipIf(!enabled)("serveur MCP (HTTP réel, PostgreSQL)", async () => {
         expect.arrayContaining([
           "list_accounts", "list_capabilities", "import_media", "create_draft", "update_draft", "validate_post",
           "preview_post", "schedule_post", "publish_now", "list_scheduled_posts", "cancel_scheduled_post", "get_publication_status",
+          "list_workflow_templates",
         ]),
       );
     });
@@ -148,6 +149,20 @@ describe.skipIf(!enabled)("serveur MCP (HTTP réel, PostgreSQL)", async () => {
       expect(status.data).toMatchObject({ status: "PUBLISHED", destinations: [{ status: "PUBLISHED", simulated: true }] });
     });
 
+    it("crée un brouillon à partir d'un modèle de workflow", async () => {
+      const { saveTemplate } = await import("@app/core/workflows");
+      const template = await saveTemplate(null, { name: `MCP ${Date.now()}`, accountIds: [accountId], defaultTime: "18:00", validationMode: "QUICK", hashtags: ["serie"] }, "test");
+      const listed = await call(client, "list_workflow_templates");
+      const entry = listed.data.templates.find((t: { template_id: string }) => t.template_id === template.id);
+      expect(entry).toMatchObject({ validation_mode: "QUICK", default_time: "18:00", accounts: [{ account_id: accountId, platform: "TEST" }] });
+      expect(entry.next_slot).toMatch(/T18:00$/);
+
+      const draft = await call(client, "create_draft", { title: "Depuis le modèle", body: "Texte", template_id: template.id });
+      const post = await prisma.post.findUniqueOrThrow({ where: { id: draft.data.post_id }, include: { variants: true } });
+      expect(post).toMatchObject({ templateId: template.id, hashtags: ["serie"] });
+      expect(post.variants.map((v) => v.platform)).toEqual(["TEST"]);
+    });
+
     it("programme, signale une heure ambiguë puis annule", async () => {
       const draft = await call(client, "create_draft", { title: "Programmée", body: "Texte", variants: [{ platform: "TEST" }] });
       const postId = draft.data.post_id as string;
@@ -156,7 +171,9 @@ describe.skipIf(!enabled)("serveur MCP (HTTP réel, PostgreSQL)", async () => {
 
       const scheduled = await call(client, "schedule_post", { post_id: postId, account_ids: [accountId], expected_version: 1, local_datetime: "2027-10-31T02:30", disambiguation: "earlier" });
       expect(scheduled.data.scheduled_at).toBe("2027-10-31T00:30:00.000Z");
-      const listed = await call(client, "list_scheduled_posts");
+      // Période ciblée : la base de test conserve les programmations des exécutions précédentes.
+      const listed = await call(client, "list_scheduled_posts", { from: "2027-10-31T00:00:00Z", to: "2027-10-31T01:00:00Z" });
+      expect(listed.data.truncated).toBe(false);
       expect(listed.data.posts.map((p: { post_id: string }) => p.post_id)).toContain(postId);
 
       const cancelled = await call(client, "cancel_scheduled_post", { post_id: postId });

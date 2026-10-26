@@ -11,6 +11,7 @@ Ce que tu peux faire :
 - publier tout de suite ou programmer (fuseau IANA, changements d'heure gérés), dupliquer, annuler ;
 - suivre chaque destination séparément (un échec n'en relance jamais une autre), dans le tableau de
   bord, le calendrier et l'historique ;
+- enregistrer des **modèles de workflow** (comptes, formats préférés, fuseau, heure, mode de validation) ;
 - piloter le tout depuis Claude Code, avec des jetons à portée limitée.
 
 État des connecteurs : voir [docs/bilan.md](docs/bilan.md).

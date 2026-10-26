@@ -11,6 +11,7 @@ import { postInputSchema, variantInputSchema } from "@app/core/posts/schema";
 import { cancelSchedule, listAccounts, listDestinations, schedulePost, validatePostForAccounts } from "@app/core/scheduling";
 import { prepareContent } from "@app/core/scheduling/content";
 import type { TokenScope } from "@app/core/tokens";
+import { draftFromTemplate, getTemplate, listTemplates, nextSlot, templateAccounts } from "@app/core/workflows";
 
 type Result = { content: { type: "text"; text: string }[]; structuredContent?: Record<string, unknown>; isError?: boolean };
 
@@ -21,11 +22,13 @@ const fail = (code: string, message: string, details?: unknown): Result => {
 };
 
 const uuid = z.uuid();
+const LIST_LIMIT = 100;
 const variantShape = variantInputSchema.extend({
   platform: z.enum(PLATFORMS).describe("Plateforme de la variante (TEST = simulation)."),
 });
 
 const INSTRUCTIONS = `Serveur du Studio de publication (outil personnel).
+Modèles de workflow : list_workflow_templates puis create_draft avec template_id (comptes, formats, fuseau, horaire habituel).
 Parcours type : import_media (fichier déposé dans le dossier inbox du projet, ou URL HTTPS) → get_operation jusqu'à SUCCEEDED → create_draft → preview_post → validate_post → schedule_post ou publish_now.
 Règles :
 - Créer ou modifier un brouillon ne publie jamais rien.
@@ -164,10 +167,52 @@ export function buildServer(token: ApiToken): McpServer {
   };
 
   server.registerTool(
+    "list_workflow_templates",
+    {
+      title: "Modèles de workflow",
+      description: "Modèles enregistrés : comptes cibles, fuseau, heure habituelle (avec le prochain créneau), mode de validation, hashtags et formats préférés.",
+      annotations: { readOnlyHint: true },
+    },
+    guarded("read", async () => {
+      const templates = await listTemplates();
+      return ok({
+        templates: await Promise.all(
+          templates.map(async (t) => ({
+            template_id: t.id,
+            name: t.name,
+            accounts: (await templateAccounts(t)).map((a) => ({ account_id: a.id, name: a.displayName, platform: a.platform, status: a.status })),
+            timezone: t.timezone,
+            default_time: t.defaultTime,
+            next_slot: t.defaultTime ? nextSlot(t.defaultTime, t.timezone) : null,
+            validation_mode: t.validationMode,
+            hashtags: t.hashtags,
+            options: t.options as Record<string, unknown>,
+          })),
+        ),
+      });
+    }),
+  );
+
+  server.registerTool(
     "create_draft",
-    { title: "Créer un brouillon", description: "Crée un brouillon. Ne publie et ne programme rien.", inputSchema: draftFields },
-    guarded("write", async (args: { title: string; body?: string; hashtags?: string[]; media_ids?: string[]; timezone?: string; variants?: z.input<typeof variantShape>[] }) => {
-      const input = postInputSchema.parse({ title: args.title, body: args.body, hashtags: args.hashtags, mediaIds: args.media_ids, timezone: args.timezone, variants: args.variants });
+    {
+      title: "Créer un brouillon",
+      description: "Crée un brouillon. Ne publie et ne programme rien. Avec template_id, les variantes, formats, hashtags et fuseau du modèle servent de base (les champs fournis priment).",
+      inputSchema: { ...draftFields, template_id: uuid.optional().describe("Modèle de workflow à appliquer (list_workflow_templates).") },
+    },
+    guarded("write", async (args: { title: string; body?: string; hashtags?: string[]; media_ids?: string[]; timezone?: string; variants?: z.input<typeof variantShape>[]; template_id?: string }) => {
+      const template = args.template_id ? await getTemplate(args.template_id) : null;
+      if (args.template_id && !template) return fail("NOT_FOUND", "Modèle introuvable.");
+      const base = template ? draftFromTemplate(template, await templateAccounts(template), args.title) : { title: args.title };
+      const input = postInputSchema.parse({
+        ...base,
+        title: args.title,
+        body: args.body,
+        mediaIds: args.media_ids,
+        ...(args.hashtags ? { hashtags: args.hashtags } : {}),
+        ...(args.timezone ? { timezone: args.timezone } : {}),
+        ...(args.variants ? { variants: args.variants } : {}),
+      });
       const post = await createDraft(input, actor);
       return ok(postSummary(post));
     }),
@@ -287,7 +332,7 @@ export function buildServer(token: ApiToken): McpServer {
     "list_scheduled_posts",
     {
       title: "Publications programmées",
-      description: "Publications programmées, en cours ou demandant une décision, avec l'état de chaque destination.",
+      description: "Publications programmées, en cours ou demandant une décision, avec l'état de chaque destination (100 au plus, les plus proches d'abord ; `truncated` indique s'il y en a d'autres : préciser alors from / to).",
       inputSchema: { from: z.iso.datetime().optional(), to: z.iso.datetime().optional() },
       annotations: { readOnlyHint: true },
     },
@@ -298,9 +343,10 @@ export function buildServer(token: ApiToken): McpServer {
           ...(from || to ? { scheduledAt: { gte: from ? new Date(from) : undefined, lte: to ? new Date(to) : undefined } } : {}),
         },
         orderBy: { scheduledAt: "asc" },
-        take: 100,
+        take: LIST_LIMIT + 1,
       });
-      return ok({ posts: await Promise.all(posts.map(async (p) => ({ post_id: p.id, title: p.title, status: p.status, version: p.version, scheduled_at: p.scheduledAt?.toISOString() ?? null, destinations: await destinationsOf(p.id) }))) });
+      const truncated = posts.length > LIST_LIMIT;
+      return ok({ truncated, posts: await Promise.all(posts.slice(0, LIST_LIMIT).map(async (p) => ({ post_id: p.id, title: p.title, status: p.status, version: p.version, scheduled_at: p.scheduledAt?.toISOString() ?? null, destinations: await destinationsOf(p.id) }))) });
     }),
   );
 

@@ -104,6 +104,9 @@ model Post {
   timezone  String        @default("Europe/Rome")
   /// Date de publication demandée (UTC) ; l'heure locale saisie est reconstituée avec `timezone`.
   scheduledAt  DateTime?
+  /// Modèle de workflow utilisé pour créer la publication (présélections de programmation).
+  templateId   String?           @db.Uuid
+  template     WorkflowTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   media        PostMedia[]
@@ -328,4 +331,28 @@ model OAuthState {
   createdBy    String
   expiresAt    DateTime
   createdAt    DateTime @default(now())
+}
+
+enum WorkflowValidation {
+  /// Brouillon à relire : rien n'est présélectionné pour la programmation.
+  REVIEW
+  /// Comptes et horaire présélectionnés : une confirmation suffit (toujours explicite).
+  QUICK
+}
+
+/// Modèle de workflow : comptes cibles, formats préférés par réseau, fuseau, horaire, mode de validation.
+model WorkflowTemplate {
+  id             String             @id @default(uuid()) @db.Uuid
+  name           String             @unique
+  accountIds     String[]           @db.Uuid
+  timezone       String             @default("Europe/Rome")
+  /// Heure de publication habituelle « HH:mm » dans le fuseau du modèle.
+  defaultTime    String?
+  validationMode WorkflowValidation @default(REVIEW)
+  hashtags       String[]           @default([])
+  /// Réglages préférés par plateforme (visibilité YouTube, Reel dans le fil…).
+  options        Json               @default("{}")
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  posts          Post[]
 }

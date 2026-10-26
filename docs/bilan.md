@@ -79,15 +79,15 @@ détecter.
 |----------------|--------|
 | §1 Méthode (CLAUDE.md, docs vérifiées, implémentation réelle, honnêteté) | Couvert |
 | §2 Stack (Next.js, PostgreSQL/Prisma, Redis/BullMQ, worker, SDK MCP, Zod, FFmpeg, Compose) | Couvert |
-| §3 Interface (8 écrans, thème clair/sombre, jaune, 2 polices, tableau de bord) | Couvert ; les « modèles de workflow » se limitent aux réglages par défaut (fuseau, politique) — voir ci-dessous |
+| §3 Interface (8 écrans, thème clair/sombre, jaune, 2 polices, tableau de bord) | Couvert (page Modèles ajoutée) |
 | §4 Médias et publications | Couvert |
 | §5 Connexion des plateformes | Couvert (TikTok manuel, comme demandé) |
-| §6 Workflows | Partiel : parcours guidé (média → comptes → variantes → vérification → publication → suivi) couvert ; **l'enregistrement de modèles de workflow nommés n'est pas implémenté** |
+| §6 Workflows | Couvert : parcours guidé + modèles enregistrables (comptes, formats préférés par réseau, fuseau, heure habituelle, mode de validation « Relecture » ou « Rapide »), utilisables depuis l'interface et le MCP |
 | §7 Programmation fiable | Couvert |
 | §8 Serveur MCP | Couvert ; règles d'automatisation préautorisées non implémentées (toute publication exige une intention explicite) |
 | §9 Sécurité | Couvert |
 | §10 Docker et documentation | Couvert |
 | §11 Tests et livraison | Couvert (tests prioritaires présents ; aucune publication publique faite) |
 
-**Reste à faire, si tu le souhaites** : modèles de workflow enregistrables (comptes, formats
-préférés, fuseau, mode de validation) et règles d'automatisation préautorisées pour le MCP.
+**Reste à faire, si tu le souhaites** : règles d'automatisation préautorisées pour le MCP (toute
+publication exige aujourd'hui une intention explicite).

@@ -84,7 +84,8 @@ de l'inbox peut ensuite être supprimé : la publication n'en dépend plus.
 | `list_media` | read | médias de la bibliothèque |
 | `import_media` | write | import depuis l'inbox ou une URL HTTPS → `operation_id` |
 | `get_operation` | read | suivi d'une opération |
-| `create_draft` / `update_draft` | write | brouillons et variantes par plateforme |
+| `list_workflow_templates` | read | modèles enregistrés, avec le prochain créneau habituel |
+| `create_draft` / `update_draft` | write | brouillons et variantes par plateforme (`template_id` pour partir d'un modèle) |
 | `preview_post` | read | texte final par plateforme |
 | `validate_post` | read | vérification contre les capacités de chaque compte |
 | `schedule_post` | publish | programmer (`local_datetime`, fuseau, `disambiguation` si heure ambiguë) |

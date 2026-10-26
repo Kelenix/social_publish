@@ -2,6 +2,13 @@
 
 Format inspiré de « Keep a Changelog » ; versions SemVer.
 
+## [0.8.0] — 2026-10-26 — Modèles de workflow
+
+- Page **Modèles** : comptes cibles, formats préférés par réseau, fuseau, heure habituelle, hashtags et mode de validation (« Relecture » ou « Rapide »).
+- Nouvelle publication depuis un modèle : variantes et réglages appliqués ; en mode Rapide, comptes et prochain créneau présélectionnés (confirmation toujours explicite).
+- Outil MCP `list_workflow_templates` et `create_draft` avec `template_id`.
+- Page Comptes : l'URL de retour OAuth de chaque réseau est toujours affichée.
+
 ## [0.7.0] — 2026-10-26 — Connecteur Facebook (Pages)
 
 - Publication sur les Pages Facebook gérées : texte, photos (une ou plusieurs), vidéo par upload reprenable.

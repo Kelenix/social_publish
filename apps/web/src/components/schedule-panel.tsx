@@ -11,23 +11,27 @@ import { cn } from "@/lib/utils";
 
 export type AccountOption = { id: string; name: string; platform: PlatformId; simulated: boolean };
 
+/** Présélections issues d'un modèle de workflow (mode « Rapide »). */
+export type ScheduleDefaults = { templateName: string; accountIds: string[]; local: string };
+
 type Props = {
   accounts: AccountOption[];
   platforms: PlatformId[];
   timezone: string;
   /** Enregistre le brouillon en cours et renvoie son identifiant (null en cas d'erreur). */
   save: () => Promise<string | null>;
+  defaults?: ScheduleDefaults;
 };
 
 const fmt = (iso: string, timeZone: string) => new Date(iso).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short", timeZone, timeZoneName: "short" });
 
-export function SchedulePanel({ accounts, platforms, timezone, save }: Props) {
+export function SchedulePanel({ accounts, platforms, timezone, save, defaults }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const usable = accounts.filter((a) => platforms.includes(a.platform));
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>(defaults?.accountIds ?? []);
   const [mode, setMode] = useState<"now" | "at">("at");
-  const [local, setLocal] = useState("");
+  const [local, setLocal] = useState(defaults?.local ?? "");
   const [result, setResult] = useState<ScheduleActionResult | null>(null);
   const chosen = selected.filter((id) => usable.some((a) => a.id === id));
 
@@ -46,6 +50,11 @@ export function SchedulePanel({ accounts, platforms, timezone, save }: Props) {
   return (
     <Card className="space-y-4">
       <CardTitle>Publier ou programmer</CardTitle>
+      {defaults && (
+        <p className="rounded-md bg-accent/15 p-2 text-xs">
+          Présélection du modèle « {defaults.templateName} » : relis l&apos;aperçu avant de confirmer.
+        </p>
+      )}
       {usable.length === 0 ? (
         <p className="text-sm text-muted">
           Aucun compte prêt pour les plateformes choisies. Ajoute un compte dans <a className="underline" href="/comptes">Comptes</a>.

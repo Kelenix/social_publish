@@ -78,6 +78,10 @@ export default async function AccountsPage({ searchParams }: PageProps<"/comptes
                 )}
                 {connector.oauth && connector.isConfigured() && (
                   <div className="mt-3 space-y-2">
+                    <p className="text-xs text-muted">
+                      URL de retour à déclarer chez {PLATFORM_LABELS[platform]} :{" "}
+                      <code className="font-mono break-all select-all text-foreground">{redirectUriFor(connector.id)}</code>
+                    </p>
                     {accounts
                       .filter((a) => a.connector === connector.id)
                       .map((a) => (

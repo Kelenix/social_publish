@@ -4,6 +4,21 @@
 
 ---
 
+## ADR-017 — Modèles de workflow
+
+- **Date** : 2026-10-26
+- **Statut** : Accepté
+- **Décideur** : Claude (product-owner + backend)
+- **Contexte** : INTAKE §6 : « enregistrer des modèles de workflow : comptes, formats préférés, fuseau horaire et mode de validation » ; seul écart restant après l'incrément 6.
+- **Décision** :
+  - Modèle `WorkflowTemplate` (nom unique, comptes, fuseau, heure habituelle `HH:mm`, hashtags, réglages par plateforme, mode `REVIEW` / `QUICK`) ; `Post.templateId` (mise à NULL si le modèle est supprimé), hors empreinte de contenu.
+  - « Mode de validation » interprété sans jamais publier implicitement : `REVIEW` = brouillon à relire, rien de présélectionné ; `QUICK` = comptes prêts et prochain créneau présélectionnés, confirmation explicite toujours requise.
+  - Prochain créneau : aujourd'hui si l'heure est à plus de 15 min, sinon le lendemain ; heure sautée → heure valide suivante.
+- **Alternatives écartées** : programmation automatique à la création (contraire à l'exigence d'intention explicite) ; éditeur graphique de workflow (exclu par l'INTAKE).
+- **Impact** : fonctionnel (moyen)
+
+---
+
 ## ADR-016 — Connecteur Facebook (Pages), hors cahier des charges initial
 
 - **Date** : 2026-10-26
