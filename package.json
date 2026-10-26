@@ -1,0 +1,31 @@
+{
+  "name": "studio-publication",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.7",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @app/web dev",
+    "build": "pnpm --filter @app/web build",
+    "lint": "eslint .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run",
+    "db:generate": "pnpm --filter @app/db generate",
+    "db:migrate": "pnpm --filter @app/db migrate:dev",
+    "db:deploy": "pnpm --filter @app/db migrate:deploy",
+    "admin:bootstrap": "pnpm --filter @app/core admin:bootstrap"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.3",
+    "pg": "8.23.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0",
+    "vitest": "4.1.12"
+  }
+}

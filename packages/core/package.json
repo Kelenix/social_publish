@@ -1,0 +1,31 @@
+{
+  "name": "@app/core",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./config": "./src/config.ts",
+    "./audit": "./src/audit.ts",
+    "./auth": "./src/auth/index.ts",
+    "./auth/cookie": "./src/auth/cookie.ts",
+    "./storage": "./src/storage/index.ts",
+    "./media": "./src/media/index.ts",
+    "./posts": "./src/posts/service.ts",
+    "./posts/schema": "./src/posts/schema.ts",
+    "./platforms": "./src/platforms.ts",
+    "./settings": "./src/settings.ts"
+  },
+  "scripts": {
+    "admin:bootstrap": "tsx scripts/bootstrap-admin.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@app/db": "workspace:*",
+    "@aws-sdk/client-s3": "3.1156.0",
+    "@aws-sdk/lib-storage": "3.1156.0",
+    "@node-rs/argon2": "2.2.2",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15"
+  }
+}

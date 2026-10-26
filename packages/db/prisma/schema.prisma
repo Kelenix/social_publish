@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model AdminUser {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  sessions     Session[]
+}
+
+/// Session navigateur : seul le hash SHA-256 du jeton est stocké.
+model Session {
+  id        String    @id @default(uuid()) @db.Uuid
+  tokenHash String    @unique
+  userId    String    @db.Uuid
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([expiresAt])
+}
+
+/// Réglages globaux (une seule ligne, id = 1).
+model AppSettings {
+  id              Int              @id @default(1)
+  defaultTimezone String           @default("Europe/Rome")
+  missedPolicy    MissedPostPolicy @default(ASK_RESCHEDULE)
+  updatedAt       DateTime         @updatedAt
+}
+
+enum MissedPostPolicy {
+  ASK_RESCHEDULE
+  PUBLISH_IF_RECENT
+  CANCEL
+}
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+}
+
+model MediaAsset {
+  id           String      @id @default(uuid()) @db.Uuid
+  originalName String
+  storageKey   String      @unique
+  thumbKey     String?
+  kind         MediaKind
+  mimeType     String
+  container    String
+  videoCodec   String?
+  audioCodec   String?
+  sizeBytes    BigInt
+  width        Int?
+  height       Int?
+  durationMs   Int?
+  frameRate    Float?
+  sha256       String
+  createdAt    DateTime    @default(now())
+  posts        PostMedia[]
+
+  @@index([createdAt])
+  @@index([sha256])
+}
+
+enum Platform {
+  INSTAGRAM
+  TIKTOK
+  YOUTUBE
+  X
+  LINKEDIN
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  PARTIAL
+  FAILED
+  CANCELLED
+}
+
+/// Publication : contenu principal + variantes par plateforme.
+/// `version` est incrémenté à chaque modification substantielle (sert aux autorisations).
+model Post {
+  id        String        @id @default(uuid()) @db.Uuid
+  title     String
+  body      String        @default("")
+  hashtags  String[]      @default([])
+  status    PostStatus    @default(DRAFT)
+  version   Int           @default(1)
+  timezone  String        @default("Europe/Rome")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  media     PostMedia[]
+  variants  PostVariant[]
+
+  @@index([status, updatedAt])
+}
+
+model PostMedia {
+  postId   String     @db.Uuid
+  mediaId  String     @db.Uuid
+  position Int
+  post     Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  media    MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+
+  @@id([postId, mediaId])
+  @@index([mediaId])
+}
+
+/// Variante par plateforme. Un champ null hérite du contenu principal.
+model PostVariant {
+  id          String   @id @default(uuid()) @db.Uuid
+  postId      String   @db.Uuid
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  platform    Platform
+  enabled     Boolean  @default(true)
+  text        String?
+  title       String?
+  description String?
+  hashtags    String[] @default([])
+  /// Médias spécifiques à la plateforme (ids ordonnés) ; vide = médias du contenu principal.
+  mediaIds    String[] @default([]) @db.Uuid
+  /// Options propres à la plateforme (visibilité YouTube, etc.), validées par le connecteur.
+  options     Json     @default("{}")
+
+  @@unique([postId, platform])
+}
+
+/// Journal des opérations (jamais de secret dans `meta`).
+model AuditLog {
+  id       BigInt   @id @default(autoincrement())
+  at       DateTime @default(now())
+  actor    String
+  action   String
+  entity   String?
+  entityId String?
+  meta     Json     @default("{}")
+
+  @@index([at])
+  @@index([entity, entityId])
+}
