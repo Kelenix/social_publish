@@ -9,6 +9,7 @@ import path from "node:path";
 import { Queue, Worker } from "bullmq";
 import { Redis } from "ioredis";
 import { applyMissedPolicy, dueDestinations, executeDestination, heartbeat, recoverInterrupted } from "@app/core/scheduling/executor";
+import { runNextOperation } from "@app/core/operations";
 import { prisma } from "@app/db";
 
 const REDIS_URL = process.env.REDIS_URL ?? "redis://localhost:6379";
@@ -63,6 +64,21 @@ async function tick(): Promise<void> {
   }
 }
 
+/** Opérations longues (imports) : exécutées une à une, hors du cycle de répartition. */
+let operationsBusy = false;
+async function drainOperations(): Promise<void> {
+  if (operationsBusy) return;
+  operationsBusy = true;
+  try {
+    let op;
+    while (running && (op = await runNextOperation())) log("opération terminée", { operationId: op.id, kind: op.kind, status: op.status });
+  } catch (error) {
+    log("opération en erreur", { error: error instanceof Error ? error.message : String(error) });
+  } finally {
+    operationsBusy = false;
+  }
+}
+
 let running = true;
 async function loop(): Promise<void> {
   log("démarrage", { concurrency: CONCURRENCY });
@@ -71,6 +87,7 @@ async function loop(): Promise<void> {
   while (running) {
     try {
       await tick();
+      void drainOperations();
     } catch (error) {
       log("cycle en erreur", { error: error instanceof Error ? error.message : String(error) });
     }

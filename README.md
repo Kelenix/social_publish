@@ -3,10 +3,10 @@
 Outil personnel pour préparer, programmer et suivre des publications Instagram, TikTok, YouTube, X et
 LinkedIn, depuis une interface web et (à venir) depuis Claude Code via un serveur MCP.
 
-> **État : incrément 2 sur 6.** Disponibles : connexion administrateur, bibliothèque de médias,
+> **État : incrément 3 sur 6.** Disponibles : connexion administrateur, bibliothèque de médias,
 > brouillons avec variantes, aperçu, publication immédiate et programmée, worker, calendrier,
-> historique, et un **connecteur de test (simulation)**. Le serveur MCP et les connecteurs réels
-> arrivent ensuite (voir `docs/plan-de-realisation.md`).
+> historique, **serveur MCP pour Claude Code** (voir `docs/mcp.md`) et un **connecteur de test
+> (simulation)**. Les connecteurs réels arrivent ensuite (voir `docs/plan-de-realisation.md`).
 > **Aucun réseau social réel n'est connecté à ce stade** : seul le connecteur de simulation publie,
 > dans la base locale.
 
@@ -28,6 +28,9 @@ LinkedIn, depuis une interface web et (à venir) depuis Claude Code via un serve
    (le compte est créé automatiquement au premier démarrage ; il n'y a pas de page d'inscription).
 4. Après la première connexion, vider `ADMIN_INITIAL_PASSWORD` dans `.env` (le compte existe déjà ;
    le mot de passe se change dans **Réglages**).
+
+Services : interface http://localhost:3000, serveur MCP http://127.0.0.1:3333/mcp (jeton à créer
+dans **Réglages**, procédure dans `docs/mcp.md`).
 
 Les services ne sont publiés que sur `127.0.0.1`. PostgreSQL n'est pas exposé (sauf override de
 développement `compose.dev.yaml`, également limité à `127.0.0.1`).
@@ -60,6 +63,7 @@ publication dans la variante « Test (simulation) ». Rien n'est envoyé à l'ex
 | `pgdata` | Base PostgreSQL (source de vérité) |
 | `media` | Originaux importés et vignettes (`/data/media`) |
 | `redisdata` | File d'exécution (reconstructible à partir de PostgreSQL) |
+| `./inbox` (dossier du projet) | Fichiers à importer via le MCP (lecture seule pour les conteneurs) |
 
 Les médias importés sont analysés par ffprobe (le type réel est lu dans le fichier, pas dans
 l'extension), puis copiés dans le stockage de l'application : une publication ne dépend jamais du
@@ -82,6 +86,8 @@ dont le nom finit par `_test`.
 ## Documentation
 
 - `docs/plan-de-realisation.md` — plan et incréments
+- `docs/mcp.md` — connexion de Claude Code, dossier inbox, outils, exemples
+- `docs/integrations.md` — sources officielles vérifiées et limites
 - `DECISION_LOG.md` — choix techniques
 - `PROJECT_STATE.md` — avancement
 - `docs/manual-tasks.md` — ce qu'il te reste à configurer

@@ -5,6 +5,13 @@ const schema = z.object({
   MEDIA_STORAGE: z.enum(["local", "s3"]).default("local"),
   MEDIA_LOCAL_DIR: z.string().min(1).default("./data/media"),
   MEDIA_MAX_BYTES: z.coerce.number().int().positive().default(4 * 1024 ** 3),
+  /** Seul dossier lisible par l'import MCP (monté dans les conteneurs mcp et worker). */
+  INBOX_DIR: z.string().min(1).default("./inbox"),
+  /** Chemins absolus côté hôte (Windows, WSL) qui désignent ce même dossier, séparés par des virgules. */
+  INBOX_HOST_ALIASES: z
+    .string()
+    .default("")
+    .transform((s) => s.split(",").map((a) => a.trim()).filter(Boolean)),
   FFPROBE_PATH: z.string().min(1).default("ffprobe"),
   FFMPEG_PATH: z.string().min(1).default("ffmpeg"),
   S3_ENDPOINT: z.string().optional(),

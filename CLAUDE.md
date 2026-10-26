@@ -17,7 +17,7 @@ Vercel : la règle « RLS obligatoire » ci-dessous est remplacée par l'autoris
 | `packages/core` | Logique métier partagée web / worker / MCP : config, auth, audit, stockage (local \| S3), médias (ffprobe), publications (schéma Zod pur + service), connecteurs (`connectors/`), programmation et exécution (`scheduling/`), fuseaux (`time.ts`) |
 | `apps/web` | Interface + API (Next.js, sortie standalone) |
 | `apps/worker` | Répartiteur (PostgreSQL → BullMQ) + exécution des destinations |
-| `apps/mcp` | Incrément 3 |
+| `apps/mcp` | Serveur MCP (Streamable HTTP, jetons à portée) : `tools.ts` (outils), `main.ts` (HTTP, Host/Origin, Bearer) |
 
 Conventions :
 - Toute logique de publication vit dans `packages/core` ; les apps n'appellent que ses fonctions.
@@ -30,6 +30,8 @@ Conventions :
 - Toute transaction qui modifie des destinations commence par `lockPost` (ordre publication → destinations).
 - Un connecteur signale ses erreurs avec `ConnectorError` (`retryable` / `fatal` / `auth` / `permission` /
   `uncertain`) et déclare ses `Capabilities` : la validation et l'interface en dépendent.
+- Les outils MCP renvoient `structuredContent` ; erreurs `{ error: { code, message, details } }`. Publier exige la portée `publish` et `expected_version`.
+- Le MCP ne lit que `INBOX_DIR` (`resolveInboxPath`) ; les actions longues passent par `Operation` (exécutées par le worker).
 - Le connecteur `test` est une simulation : toujours étiqueté comme tel, jamais présenté comme un réseau.
 - Textes d'interface en français.
 

@@ -4,6 +4,30 @@
 
 ---
 
+## ADR-012 — Autorisation de publication liée à la version relue
+
+- **Date** : 2026-10-26
+- **Statut** : Accepté
+- **Décideur** : Claude (security-engineer)
+- **Contexte** : L'INTAKE exige une intention explicite, liée à la version du contenu, aux médias, aux comptes et à la date, invalidée par toute modification substantielle.
+- **Décision** : `schedule_post` / `publish_now` exigent la portée `publish` et `expected_version` (comparé sous verrou). La destination mémorise `contentVersion`, comptes, date, auteur (`mcp:<nom du jeton>`) ; le worker refuse une autre version. Les médias et variantes font partie de l'empreinte de version. Pas de règles d'automatisation implicites dans le MVP.
+- **Alternatives écartées** : simple booléen `confirm` (n'empêche pas d'autoriser un contenu modifié entre-temps).
+- **Conséquences** : Claude doit relire (aperçu) puis citer la version ; toute modification impose une nouvelle autorisation.
+- **Impact** : métier / sécurité (fort)
+
+## ADR-011 — Serveur MCP HTTP sans session, imports exécutés par le worker
+
+- **Date** : 2026-10-26
+- **Statut** : Accepté (précise ADR-003)
+- **Décideur** : Claude (solution-architect)
+- **Contexte** : Claude Code sous Windows ou WSL ; l'application dans Docker ; actions longues à rendre asynchrones.
+- **Décision** : SDK officiel 1.32.2, Streamable HTTP sans session (un serveur par requête, réponses JSON), port publié sur `127.0.0.1:3333`, contrôle `Host`/`Origin`, jeton Bearer (`stp_…`, SHA-256 en base, portées `read`/`write`/`publish`, expiration, révocation). `import_media` crée une `Operation` et rend la main ; le worker l'exécute (FFmpeg dans son image). Inbox montée en lecture seule ; alias de chemins Windows/WSL (`INBOX_HOST_ALIASES`). Import d'URL : HTTPS seulement, résolution DNS vérifiée et connexion à l'adresse vérifiée, redirections revérifiées.
+- **Alternatives écartées** : stdio (Node + base accessibles depuis l'hôte, chemins divergents) ; session MCP (inutile sans notifications serveur).
+- **Conséquences** : une seule configuration Claude Code ; suivi par interrogation (`get_operation`).
+- **Impact** : technique / sécurité
+
+---
+
 ## ADR-010 — Verrou de publication avant toute modification de ses destinations
 
 - **Date** : 2026-10-26

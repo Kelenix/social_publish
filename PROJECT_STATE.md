@@ -4,10 +4,10 @@
 
 ## Snapshot
 
-- **Phase courante** : 4 — Implémentation (Inc-2 terminé, Inc-3 à démarrer)
+- **Phase courante** : 4 — Implémentation (Inc-3 terminé, Inc-4 à démarrer)
 - **Dernière mise à jour** : 2026-10-26
 - **Santé** : 🟢 OK
-- **Prochaine action** : Incrément 3 — serveur MCP (outils, jetons à portée, autorisations, import limité à `inbox/`)
+- **Prochaine action** : Incrément 4 — connecteur YouTube (OAuth + PKCE, jetons chiffrés, upload reprenable, URL HTTPS des médias)
 
 ## Avancement par phase
 
@@ -16,8 +16,8 @@
 | 0 — Cadrage & intake        | ✅ fait | Plan validé le 2026-10-26 |
 | 1 — Définition produit      | ⬜ à faire | |
 | 2 — Planification           | ⬜ à faire | |
-| 3 — Architecture & design   | 🔄 en cours | ADR-001 à 010 |
-| 4 — Implémentation          | 🔄 en cours | Inc-1 ✅ Inc-2 ✅ |
+| 3 — Architecture & design   | 🔄 en cours | ADR-001 à 012 |
+| 4 — Implémentation          | 🔄 en cours | Inc-1 ✅ Inc-2 ✅ Inc-3 ✅ |
 | 5 — Qualité                 | ⬜ à faire | |
 | 6 — Mise en production      | ⬜ à faire | |
 | 7 — Documentation           | ⬜ à faire | |
@@ -29,7 +29,7 @@
 |----|-----------|------------------------|----------|------|
 | Inc-1 | Socle, Docker, base, auth admin, UI, médias, brouillons | §2, §3, §4, §10 | P0 | ✅ |
 | Inc-2 | Scheduler, worker, connecteur de test, calendrier, historique | §6, §7, §11 | P0 | ✅ |
-| Inc-3 | Serveur MCP + jetons + autorisations | §8, §9 | P0 | ⬜ |
+| Inc-3 | Serveur MCP + jetons + autorisations | §8, §9 | P0 | ✅ |
 | Inc-4 | Premier connecteur réel (OAuth) | §5 | P1 | ⬜ |
 | Inc-5 | Autres connecteurs + TikTok manuel | §5 | P1 | ⬜ |
 | Inc-6 | Vérification complète + documentation | §1, §10, §11 | P0 | ⬜ |
@@ -48,6 +48,8 @@
 - voir `docs/manual-tasks.md`
 
 ## Journal de session
+
+- 2026-10-26 — Inc-2 commité (`a83f0a1`). Inc-3 livré sur `feat/inc-3-mcp` (non commité) : serveur MCP (14 outils, dont les 12 requis), jetons à portée (UI Réglages), opérations asynchrones exécutées par le worker, inbox sécurisée + alias Windows/WSL, import d'URL anti-SSRF, autorisation liée à `expected_version`. Vérifié : 120 tests (dont 30 sécurité d'import, 8 MCP via client SDK réel) ; stack Docker 5 services healthy ; client MCP réel contre Docker (import par chemin Windows absolu → worker → brouillon → publish_now → publié après fermeture du client) ; jeton révoqué → 401, hôte étranger → 403. Non vérifié : connexion depuis WSL, enregistrement dans Claude Code (`claude mcp add`) laissé à l'utilisateur.
 
 - 2026-10-26 — Inc-1 commité (`7192bed`). Inc-2 livré sur `feat/inc-2-scheduler` (non commité). Vérifié : lint, types, 82 tests (dont intégration : fuseaux/DST, concurrence, succès partiel, reprise après arrêt, rapprochement, Retry-After, jeton expiré, publications manquées, annulation) ; stack Docker complet healthy ; bout en bout navigateur + worker réel (publication immédiate vers 2 comptes → publiée + échec indépendants ; programmation à +2 min avec worker arrêté puis redémarré → publiée une seule fois ; arrêt propre SIGTERM). Défauts trouvés et corrigés : course sur l'état global (ADR-010), arrêt non propre du worker sous pnpm. Non couvert en bout en bout : politique « manquée » (> 10 min d'arrêt), couverte par les tests d'intégration.
 

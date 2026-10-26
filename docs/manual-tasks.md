@@ -10,3 +10,5 @@
 | M6 | (Optionnel) Supprimer la base `studio_test` si tu veux repartir de zéro pour les tests | Confort | ⬜ |
 | M3 | Installer un tunnel HTTPS (ex. Cloudflare Tunnel) | Publication réelle de médias depuis le PC | ⬜ (incrément 4) |
 | M4 | Créer un projet Google Cloud + identifiants OAuth YouTube (procédure détaillée à l'incrément 4) | Connecteur YouTube | ⬜ |
+| M7 | Créer un jeton dans **Réglages → Jetons API et MCP**, puis lancer la commande `claude mcp add …` affichée (voir `docs/mcp.md`) | Utiliser le Studio depuis Claude Code | ⬜ |
+| M8 | (Optionnel) Vérifier la connexion depuis WSL : `curl -i http://127.0.0.1:3333/health` | Claude Code sous WSL | ⬜ |

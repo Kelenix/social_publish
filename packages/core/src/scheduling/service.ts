@@ -13,7 +13,7 @@ export type When = { mode: "now" } | { mode: "at"; local: string; timezone: stri
 
 export type ScheduleOutcome =
   | { ok: true; postId: string; scheduledAt: Date; destinationIds: string[] }
-  | { ok: false; code: "NOT_DRAFT" | "NO_ACCOUNT" | "ACCOUNT_NOT_READY" | "INVALID_CONTENT" | "TIME" | "PAST"; message: string; issues?: { accountId: string; issues: ValidationIssue[] }[]; time?: ZonedResult };
+  | { ok: false; code: "NOT_DRAFT" | "NO_ACCOUNT" | "ACCOUNT_NOT_READY" | "INVALID_CONTENT" | "TIME" | "PAST" | "VERSION_MISMATCH"; message: string; issues?: { accountId: string; issues: ValidationIssue[] }[]; time?: ZonedResult };
 
 /**
  * Verrou de ligne sur la publication. Toujours pris AVANT de modifier ses destinations : ordre
@@ -48,7 +48,14 @@ export async function validatePostForAccounts(postId: string, accountIds: string
  * Programme (ou publie immédiatement) une publication vers des comptes. Cette action vaut
  * autorisation explicite pour la version actuelle du contenu, ces comptes et cette date.
  */
-export async function schedulePost(postId: string, accountIds: string[], when: When, actor: string, now = new Date()): Promise<ScheduleOutcome> {
+export async function schedulePost(
+  postId: string,
+  accountIds: string[],
+  when: When,
+  actor: string,
+  options: { now?: Date; expectedVersion?: number } = {},
+): Promise<ScheduleOutcome> {
+  const now = options.now ?? new Date();
   const ids = [...new Set(accountIds)];
   if (ids.length === 0) return { ok: false, code: "NO_ACCOUNT", message: "Choisis au moins un compte." };
 
@@ -70,6 +77,9 @@ export async function schedulePost(postId: string, accountIds: string[], when: W
   const post = await getPost(postId);
   if (!post) throw new Error("Publication introuvable.");
   if (post.status !== "DRAFT") return { ok: false, code: "NOT_DRAFT", message: "Seul un brouillon peut être programmé." };
+  if (options.expectedVersion !== undefined && options.expectedVersion !== post.version) {
+    return { ok: false, code: "VERSION_MISMATCH", message: `Le contenu a changé (version actuelle ${post.version}, version vue ${options.expectedVersion}) : relis-le avant d'autoriser.` };
+  }
 
   const accounts = await prisma.connectedAccount.findMany({ where: { id: { in: ids } } });
   if (accounts.length !== ids.length) return { ok: false, code: "NO_ACCOUNT", message: "Compte introuvable." };

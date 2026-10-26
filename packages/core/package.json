@@ -14,11 +14,16 @@
     "./platforms": "./src/platforms.ts",
     "./settings": "./src/settings.ts",
     "./time": "./src/time.ts",
+    "./tokens": "./src/tokens.ts",
+    "./tokens/scopes": "./src/tokens-scopes.ts",
+    "./operations": "./src/operations.ts",
     "./connectors": "./src/connectors/index.ts",
     "./connectors/scenarios": "./src/connectors/scenarios.ts",
     "./scheduling": "./src/scheduling/service.ts",
     "./scheduling/executor": "./src/scheduling/executor.ts",
-    "./scheduling/status": "./src/scheduling/status.ts"
+    "./scheduling/status": "./src/scheduling/status.ts",
+    "./scheduling/content": "./src/scheduling/content.ts",
+    "./media/sources": "./src/media/sources.ts"
   },
   "scripts": {
     "admin:bootstrap": "tsx scripts/bootstrap-admin.ts",
