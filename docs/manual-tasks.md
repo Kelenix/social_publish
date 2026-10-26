@@ -9,6 +9,8 @@
 | M5 | Après la 1re connexion, vider `ADMIN_INITIAL_PASSWORD` dans `.env` (le `.env` local actuel contient un mot de passe de développement généré) | Sécurité | ⬜ |
 | M6 | (Optionnel) Supprimer la base `studio_test` si tu veux repartir de zéro pour les tests | Confort | ⬜ |
 | M3 | Installer un tunnel HTTPS (ex. Cloudflare Tunnel) | Publication réelle de médias depuis le PC | ⬜ (incrément 4) |
-| M4 | Créer un projet Google Cloud + identifiants OAuth YouTube (procédure détaillée à l'incrément 4) | Connecteur YouTube | ⬜ |
+| M4 | Créer le projet Google Cloud, activer YouTube Data API v3, configurer le consentement (toi en utilisateur test), créer l'ID client « Application Web » avec l'URL de retour `http://localhost:3000/api/oauth/youtube/callback`, renseigner `YOUTUBE_CLIENT_ID` et `YOUTUBE_CLIENT_SECRET` dans `.env` (procédure : `docs/youtube.md`) | Connecteur YouTube | ⬜ |
+| M9 | Sauvegarder `TOKEN_ENCRYPTION_KEY` (déjà générée dans `.env`) hors du projet | Ne pas perdre les connexions | ⬜ |
+| M10 | Premier test réel YouTube en **privé**, puis me dire si la connexion OAuth (PKCE) et l'envoi ont fonctionné | Valider le connecteur contre la vraie API | ⬜ |
 | M7 | Créer un jeton dans **Réglages → Jetons API et MCP**, puis lancer la commande `claude mcp add …` affichée (voir `docs/mcp.md`) | Utiliser le Studio depuis Claude Code | ⬜ |
 | M8 | (Optionnel) Vérifier la connexion depuis WSL : `curl -i http://127.0.0.1:3333/health` | Claude Code sous WSL | ⬜ |

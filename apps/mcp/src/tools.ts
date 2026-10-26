@@ -315,7 +315,7 @@ export function buildServer(token: ApiToken): McpServer {
     guarded("publish", async ({ post_id }: { post_id: string }) => {
       if (!(await getPost(post_id))) return fail("NOT_FOUND", "Publication introuvable.");
       const result = await cancelSchedule(post_id, actor);
-      return ok({ post_id, cancelled: result.cancelled, back_to_draft: result.backToDraft, destinations: await destinationsOf(post_id) });
+      return ok({ post_id, cancelled: result.cancelled, back_to_draft: result.backToDraft, remote_errors: result.remoteErrors, destinations: await destinationsOf(post_id) });
     }),
   );
 

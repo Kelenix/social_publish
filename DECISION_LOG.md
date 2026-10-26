@@ -4,6 +4,26 @@
 
 ---
 
+## ADR-013 — Connecteur YouTube : portées, programmation native, jetons chiffrés
+
+- **Date** : 2026-10-26
+- **Statut** : Accepté
+- **Décideur** : Claude (backend + security-engineer)
+- **Contexte** : Premier connecteur réel. L'INTAKE demande la programmation native quand elle existe, la gestion des annulations déjà transmises, le chiffrement des jetons hors base, OAuth state + PKCE.
+- **Décision** :
+  - Portées `youtube.upload` + `youtube.force-ssl` (lecture du statut et de la chaîne, `videos.update` pour annuler une programmation native). Portée non accordée → compte « Permission manquante ».
+  - Jetons chiffrés AES-256-GCM (`TOKEN_ENCRYPTION_KEY`, 32 octets, hors base) ; rafraîchissement automatique ; `invalid_grant` → « Reconnexion nécessaire ».
+  - OAuth : `state` aléatoire à usage unique (haché, 10 min), PKCE S256, vérificateur chiffré.
+  - Visibilité **privée par défaut** ; déclaration « conçue pour les enfants » obligatoire ; divulgation de contenu synthétique proposée.
+  - Programmation native pour une vidéo publique prévue à plus de 15 min : envoi immédiat en privé avec `publishAt` (publication sans le PC). Annulation = repasse en privée sans `publishAt` ; la vidéo n'est jamais supprimée automatiquement.
+  - Upload reprenable, URL de session conservée en base : reprise après coupure, rapprochement après arrêt, sans doublon.
+  - Quota épuisé → attente jusqu'à minuit, heure du Pacifique.
+- **Alternatives écartées** : `youtube.upload` + `youtube.readonly` seulement (moins de droits, mais pas d'annulation distante) ; suppression de la vidéo à l'annulation (irréversible).
+- **Conséquences** : la portée `force-ssl` permet aussi de modifier ou supprimer des vidéos ; le Studio ne s'en sert que pour lire et repasser en privé. Revenir à des portées plus étroites reste possible (en renonçant à l'annulation distante).
+- **Impact** : sécurité / métier (moyen)
+
+---
+
 ## ADR-012 — Autorisation de publication liée à la version relue
 
 - **Date** : 2026-10-26

@@ -1,9 +1,10 @@
 import type { ConnectedAccount, Platform } from "@app/db";
 import { testConnector } from "./test-connector";
+import { youtubeConnector } from "./youtube";
 import type { Connector, ConnectorState } from "./types";
 
-/** Connecteurs disponibles. Les connecteurs réels sont ajoutés aux incréments 4 et 5. */
-const CONNECTORS: Connector[] = [testConnector];
+/** Connecteurs disponibles (les autres réseaux arrivent à l'incrément 5). */
+const CONNECTORS: Connector[] = [youtubeConnector, testConnector];
 
 export function listConnectors(): Connector[] {
   return CONNECTORS;

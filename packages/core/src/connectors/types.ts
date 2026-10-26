@@ -18,6 +18,12 @@ export type Capabilities = {
     descriptionMax?: number;
     hashtagsMax?: number;
     titleRequired?: boolean;
+    /** Limite en octets UTF-8 (YouTube compte la description en octets). */
+    descriptionMaxBytes?: number;
+    /** Longueur totale des hashtags/tags, séparateurs compris. */
+    tagsMaxChars?: number;
+    /** Caractères refusés dans le titre et la description. */
+    forbiddenChars?: string[];
     mediaMin: number;
     mediaMax: number;
     mimeTypes: string[];
@@ -43,7 +49,8 @@ export type ConnectorState =
 
 export type PublishMedia = {
   asset: MediaAsset;
-  open: () => Promise<Readable>;
+  /** Lecture depuis le stockage durable ; `range` permet de reprendre un envoi interrompu. */
+  open: (range?: { start: number; end: number }) => Promise<Readable>;
 };
 
 export type PublishContext = {
@@ -57,12 +64,20 @@ export type PublishContext = {
   caption: string;
   media: PublishMedia[];
   remoteId: string | null;
+  /** Date de publication demandée (pour la programmation native). */
+  scheduledAt: Date;
+  /** État propre au connecteur, conservé entre tentatives (ex. URL de session d'upload). */
+  state: Record<string, unknown>;
+  /** Enregistre immédiatement un complément d'état (survit à un arrêt brutal). */
+  saveState: (patch: Record<string, unknown>) => Promise<void>;
 };
 
 export type PublishResult =
   | { status: "published"; remoteId: string; url?: string }
   /** Envoyé, en cours de traitement chez la plateforme : suivre avec getStatus. */
-  | { status: "processing"; remoteId: string; pollAfterMs: number };
+  | { status: "processing"; remoteId: string; pollAfterMs: number }
+  /** Programmée nativement par la plateforme : publication à `publishAt` sans intervention locale. */
+  | { status: "scheduled"; remoteId: string; url?: string; publishAt: Date };
 
 export type ConnectorErrorKind =
   /** Erreur temporaire (réseau, 5xx, quota) : nouvelle tentative possible. */
@@ -90,6 +105,23 @@ export class ConnectorError extends Error {
 
 export type ReconcileResult = { found: true; remoteId: string; url?: string } | { found: false };
 
+/** Compte obtenu à l'issue d'une autorisation OAuth. */
+export type OAuthAccount = {
+  externalId: string;
+  displayName: string;
+  credentials: Record<string, unknown>;
+  grantedScopes: string[];
+  metadata: Record<string, unknown>;
+  /** READY, ou PERMISSION_MISSING si une portée nécessaire n'a pas été accordée. */
+  status: "READY" | "PERMISSION_MISSING";
+  statusDetail?: string;
+};
+
+export interface OAuthProvider {
+  authorizationUrl(params: { state: string; codeChallenge: string; redirectUri: string }): string;
+  exchange(params: { code: string; codeVerifier: string; redirectUri: string }): Promise<OAuthAccount>;
+}
+
 export interface Connector {
   id: string;
   platform: Platform;
@@ -101,4 +133,11 @@ export interface Connector {
   publish(ctx: PublishContext): Promise<PublishResult>;
   getStatus?(ctx: PublishContext & { remoteId: string }): Promise<PublishResult>;
   reconcile?(ctx: PublishContext): Promise<ReconcileResult>;
+  /** Annule une publication déjà transmise et programmée chez la plateforme. */
+  cancel?(ctx: PublishContext & { remoteId: string }): Promise<void>;
+  /** Vérifie les options propres à la plateforme (visibilité, déclarations obligatoires…). */
+  validateOptions?(options: Record<string, unknown>): { field: "options"; message: string }[];
+  /** Envoi anticipé pour une programmation native (le PC peut être éteint à l'heure prévue). */
+  usesNativeScheduling?(options: Record<string, unknown>, scheduledAt: Date, now: Date): boolean;
+  oauth?: OAuthProvider;
 }

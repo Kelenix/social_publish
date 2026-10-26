@@ -172,10 +172,11 @@ describe.skipIf(!enabled)("programmation et exécution (intégration PostgreSQL)
       const [id] = await scheduleNow((await draft("uncertain")).id);
       expect(await executor.executeDestination(id!, W)).toBe("UNCERTAIN");
       expect(await executor.executeDestination(id!, W)).toBe("skipped");
-      expect(await executor.executeDestination(id!, W, later(executor.RECONCILE_DELAY_MS + 1_000))).toBe("PUBLISHED");
+      expect(await executor.executeDestination(id!, W, later(executor.RECONCILE_DELAY_MS + 1_000))).toBe("PROCESSING");
+      expect(await executor.executeDestination(id!, W, later(executor.RECONCILE_DELAY_MS + 2_000))).toBe("PUBLISHED");
       expect(await publications(id!)).toBe(1);
       const history = await prisma.publicationAttempt.findMany({ where: { destinationId: id }, orderBy: { startedAt: "asc" } });
-      expect(history.map((h) => h.outcome)).toEqual(["UNCERTAIN", "RECONCILED"]);
+      expect(history.map((h) => h.outcome)).toEqual(["UNCERTAIN", "RECONCILED", "PUBLISHED"]);
     });
 
     it("reprise après arrêt brutal pendant l'envoi : vérifie avant de renvoyer", async () => {
@@ -199,7 +200,8 @@ describe.skipIf(!enabled)("programmation et exécution (intégration PostgreSQL)
       await prisma.destination.update({ where: { id }, data: { status: "PUBLISHING", attempts: 1, lockedBy: "mort", lockedUntil: new Date(Date.now() - 1_000) } });
 
       await executor.recoverInterrupted();
-      expect(await executor.executeDestination(id!, W, later(executor.RECONCILE_DELAY_MS + 1_000))).toBe("PUBLISHED");
+      expect(await executor.executeDestination(id!, W, later(executor.RECONCILE_DELAY_MS + 1_000))).toBe("PROCESSING");
+      expect(await executor.executeDestination(id!, W, later(executor.RECONCILE_DELAY_MS + 2_000))).toBe("PUBLISHED");
       expect(await publications(id!)).toBe(1);
     });
   });
@@ -223,7 +225,7 @@ describe.skipIf(!enabled)("programmation et exécution (intégration PostgreSQL)
     it("annule une programmation non commencée : retour au brouillon", async () => {
       const post = await draft();
       await scheduling.schedulePost(post.id, [account.id], { mode: "at", local: "2030-06-01T09:00", timezone: "Europe/Rome" }, "test");
-      expect(await scheduling.cancelSchedule(post.id, "test")).toEqual({ cancelled: 1, backToDraft: true });
+      expect(await scheduling.cancelSchedule(post.id, "test")).toEqual({ cancelled: 1, backToDraft: true, remoteErrors: [] });
       expect(await postStatus(post.id)).toBe("DRAFT");
       expect(await prisma.destination.count({ where: { postId: post.id } })).toBe(0);
     });
@@ -233,7 +235,7 @@ describe.skipIf(!enabled)("programmation et exécution (intégration PostgreSQL)
       const post = await draft();
       const [a, b] = await scheduleNow(post.id, [account.id, second.id]);
       await executor.executeDestination(a!, W);
-      expect(await scheduling.cancelSchedule(post.id, "test")).toEqual({ cancelled: 1, backToDraft: false });
+      expect(await scheduling.cancelSchedule(post.id, "test")).toEqual({ cancelled: 1, backToDraft: false, remoteErrors: [] });
       expect((await dest(a!)).status).toBe("PUBLISHED");
       expect((await dest(b!)).status).toBe("CANCELLED");
       expect(await executor.executeDestination(b!, W)).toBe("skipped");

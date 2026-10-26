@@ -1,7 +1,7 @@
 import type { ResolvedVariant } from "../posts/schema";
 import type { Capabilities } from "./types";
 
-export type ValidationIssue = { field: "text" | "title" | "description" | "hashtags" | "media"; message: string };
+export type ValidationIssue = { field: "text" | "title" | "description" | "hashtags" | "media" | "options"; message: string };
 
 type MediaFacts = {
   id: string;
@@ -34,6 +34,16 @@ export function validateContent(content: ResolvedVariant, caption: string, media
   }
   if (limits.descriptionMax !== undefined && content.description.length > limits.descriptionMax) {
     issues.push({ field: "description", message: `Description trop longue (maximum ${limits.descriptionMax} caractères).` });
+  }
+  if (limits.descriptionMaxBytes !== undefined && Buffer.byteLength(content.description, "utf8") > limits.descriptionMaxBytes) {
+    issues.push({ field: "description", message: `Description trop longue : ${Buffer.byteLength(content.description, "utf8")} octets (maximum ${limits.descriptionMaxBytes}).` });
+  }
+  for (const char of limits.forbiddenChars ?? []) {
+    if (content.title.includes(char)) issues.push({ field: "title", message: `Caractère « ${char} » interdit dans le titre.` });
+    if (content.description.includes(char)) issues.push({ field: "description", message: `Caractère « ${char} » interdit dans la description.` });
+  }
+  if (limits.tagsMaxChars !== undefined && content.hashtags.join(",").length > limits.tagsMaxChars) {
+    issues.push({ field: "hashtags", message: `Tags trop longs : ${content.hashtags.join(",").length} caractères (maximum ${limits.tagsMaxChars}, virgules comprises).` });
   }
   if (limits.hashtagsMax !== undefined && content.hashtags.length > limits.hashtagsMax) {
     issues.push({ field: "hashtags", message: `Trop de hashtags : ${content.hashtags.length} (maximum ${limits.hashtagsMax}).` });

@@ -14,7 +14,8 @@ export type PreparedContent = {
 
 /** Contenu effectif d'une publication pour un compte, validé contre les capacités du connecteur. */
 export async function prepareContent(post: PostWithContent, account: ConnectedAccount): Promise<PreparedContent> {
-  const capabilities = getConnector(account.connector).capabilities(account);
+  const connector = getConnector(account.connector);
+  const capabilities = connector.capabilities(account);
   const input = toInput(post);
   const variant = input.variants.find((v) => v.platform === account.platform && v.enabled);
   if (!variant) {
@@ -33,5 +34,6 @@ export async function prepareContent(post: PostWithContent, account: ConnectedAc
   const media = content.mediaIds.map((id) => byId.get(id)).filter((m): m is MediaAsset => Boolean(m));
   const body = PLATFORM_FIELDS[account.platform].includes("text") ? content.text : content.description;
   const caption = composeCaption(body, content.hashtags);
-  return { content, caption, media, capabilities, issues: validateContent(content, caption, media, capabilities) };
+  const issues = [...validateContent(content, caption, media, capabilities), ...(connector.validateOptions?.(content.options) ?? [])];
+  return { content, caption, media, capabilities, issues };
 }

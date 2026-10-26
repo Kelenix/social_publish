@@ -29,6 +29,7 @@ const TONE: Record<DestinationStatus, "neutral" | "accent" | "success" | "danger
   PENDING: "accent",
   PUBLISHING: "accent",
   PROCESSING: "accent",
+  REMOTE_SCHEDULED: "accent",
   RETRY_WAIT: "warning",
   PUBLISHED: "success",
   FAILED: "danger",

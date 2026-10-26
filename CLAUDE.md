@@ -32,6 +32,8 @@ Conventions :
   `uncertain`) et déclare ses `Capabilities` : la validation et l'interface en dépendent.
 - Les outils MCP renvoient `structuredContent` ; erreurs `{ error: { code, message, details } }`. Publier exige la portée `publish` et `expected_version`.
 - Le MCP ne lit que `INBOX_DIR` (`resolveInboxPath`) ; les actions longues passent par `Operation` (exécutées par le worker).
+- Connecteurs OAuth : `startAuthorization` / `completeAuthorization` (state + PKCE) ; jetons uniquement via `readCredentials` / `saveCredentials` (chiffrés, `crypto.ts`). URLs d'API surchargeables par variables d'environnement pour les tests de contrat.
+- État reprenable d'un envoi : `ctx.saveState` (persisté immédiatement dans `Destination.connectorState`).
 - Le connecteur `test` est une simulation : toujours étiqueté comme tel, jamais présenté comme un réseau.
 - Textes d'interface en français.
 

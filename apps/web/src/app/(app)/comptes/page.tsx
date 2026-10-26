@@ -1,9 +1,10 @@
-import { connectorForPlatform, connectorState, getConnector, SIMULATION_SCENARIOS, type ConnectorState } from "@app/core/connectors";
+import Link from "next/link";
+import { connectorForPlatform, connectorState, getConnector, redirectUriFor, SIMULATION_SCENARIOS, type ConnectorState } from "@app/core/connectors";
 import { PLATFORM_LABELS, REAL_PLATFORMS } from "@app/core/platforms";
 import { listAccounts } from "@app/core/scheduling";
 import { createTestAccountAction, reconnectTestAccountAction } from "../programmation-actions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input, Label, Select } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
@@ -30,8 +31,14 @@ const PLANNED: Record<(typeof REAL_PLATFORMS)[number], string> = {
   TIKTOK: "incrément 5 (mode manuel)",
 };
 
-export default async function AccountsPage() {
+/** Variables à renseigner pour activer un connecteur OAuth (voir docs/youtube.md). */
+const SETUP: Record<string, string> = {
+  youtube: "YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET et TOKEN_ENCRYPTION_KEY dans .env (procédure : docs/youtube.md)",
+};
+
+export default async function AccountsPage({ searchParams }: PageProps<"/comptes">) {
   await requireUser();
+  const { connecte, erreur } = await searchParams;
   const accounts = await listAccounts();
   const testAccounts = accounts.filter((a) => a.connector === "test");
   const caps = getConnector("test").capabilities();
@@ -39,6 +46,16 @@ export default async function AccountsPage() {
   return (
     <>
       <PageHeader title="Comptes connectés" description="Connexion uniquement via les API officielles et OAuth." />
+      {typeof connecte === "string" && (
+        <p role="status" className="mb-4 rounded-md border border-success/40 bg-success/10 p-3 text-sm">
+          Compte « {connecte} » connecté.
+        </p>
+      )}
+      {typeof erreur === "string" && (
+        <p role="alert" className="mb-4 rounded-md border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
+          {erreur}
+        </p>
+      )}
 
       <section className="mb-8">
         <h2 className="mb-3 text-sm font-semibold">Réseaux sociaux</h2>
@@ -53,6 +70,39 @@ export default async function AccountsPage() {
                   <Badge tone={STATE[state].tone}>{STATE[state].label}</Badge>
                 </div>
                 {!connector && <p className="mt-2 text-xs text-muted">Connecteur prévu à l&apos;{PLANNED[platform]}.</p>}
+                {connector && !connector.isConfigured() && (
+                  <p className="mt-2 text-xs text-muted">
+                    À configurer : {SETUP[connector.id]}. URL de retour OAuth : <code className="font-mono">{redirectUriFor(connector.id)}</code>
+                  </p>
+                )}
+                {connector?.isConfigured() && (
+                  <div className="mt-3 space-y-2">
+                    {accounts
+                      .filter((a) => a.connector === connector.id)
+                      .map((a) => (
+                        <div key={a.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                          <span className="truncate">{a.displayName}</span>
+                          <span className="flex items-center gap-2">
+                            <Badge tone={STATE[a.status].tone}>{STATE[a.status].label}</Badge>
+                            {a.status !== "READY" && (
+                              <Link href={`/api/oauth/${connector.id}/start`} prefetch={false} className={buttonVariants({ size: "sm" })}>
+                                Reconnecter
+                              </Link>
+                            )}
+                          </span>
+                          {a.statusDetail && <p className="w-full text-xs text-danger">{a.statusDetail}</p>}
+                        </div>
+                      ))}
+                    <Link href={`/api/oauth/${connector.id}/start`} prefetch={false} className={buttonVariants({ size: "sm", variant: "primary" })}>
+                      Connecter un compte {PLATFORM_LABELS[platform]}
+                    </Link>
+                    <ul className="list-disc space-y-0.5 pl-4 text-xs text-muted">
+                      {connector.capabilities().notes.map((n) => (
+                        <li key={n}>{n}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </li>
             );
           })}

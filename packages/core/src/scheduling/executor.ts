@@ -59,7 +59,7 @@ async function claim(id: string, workerId: string, now: Date): Promise<{ dest: D
   if ((await prisma.destination.updateMany({ where: { ...due, status: { in: ["PENDING", "RETRY_WAIT"] } }, data: { ...lock, status: "PUBLISHING", attempts: { increment: 1 } } })).count === 1) {
     return { dest: await prisma.destination.findUniqueOrThrow({ where: { id } }), kind: "publish" };
   }
-  if ((await prisma.destination.updateMany({ where: { ...due, status: "PROCESSING" }, data: lock })).count === 1) {
+  if ((await prisma.destination.updateMany({ where: { ...due, status: { in: ["PROCESSING", "REMOTE_SCHEDULED"] } }, data: lock })).count === 1) {
     return { dest: await prisma.destination.findUniqueOrThrow({ where: { id } }), kind: "poll" };
   }
   if ((await prisma.destination.updateMany({ where: { ...due, status: "UNCERTAIN" }, data: lock })).count === 1) {
@@ -111,15 +111,27 @@ export async function executeDestination(id: string, workerId: string, now = new
     account,
     content: prepared.content,
     caption: prepared.caption,
-    media: prepared.media.map((asset) => ({ asset, open: () => storage.read(asset.storageKey) })),
+    media: prepared.media.map((asset) => ({ asset, open: (range) => storage.read(asset.storageKey, range) })),
     remoteId: dest.remoteId,
+    scheduledAt: dest.scheduledAt,
+    state: { ...(dest.connectorState as Record<string, unknown>) },
+    async saveState(patch) {
+      Object.assign(ctx.state, patch);
+      await prisma.destination.update({ where: { id: dest.id }, data: { connectorState: ctx.state as Prisma.InputJsonObject } });
+    },
   };
 
   const attempt = await prisma.publicationAttempt.create({ data: { destinationId: dest.id, kind, workerId } });
   try {
     if (kind === "reconcile") {
       const found = await connector.reconcile!(ctx);
-      if (found.found) return finish(dest, attempt.id, "RECONCILED", { status: "PUBLISHED", remoteId: found.remoteId, remoteUrl: found.url, publishedAt: new Date() });
+      if (found.found) {
+        // Trouvée chez la plateforme : si elle expose un statut, on vérifie le traitement avant de conclure.
+        const data: Prisma.DestinationUpdateInput = connector.getStatus
+          ? { status: "PROCESSING", remoteId: found.remoteId, remoteUrl: found.url, nextAttemptAt: new Date() }
+          : { status: "PUBLISHED", remoteId: found.remoteId, remoteUrl: found.url, publishedAt: new Date() };
+        return finish(dest, attempt.id, "RECONCILED", data);
+      }
       // Absence confirmée : un nouvel envoi ne crée pas de doublon.
       if (dest.attempts >= MAX_ATTEMPTS) return finish(dest, attempt.id, "FATAL_ERROR", { status: "FAILED" }, { code: "MAX_ATTEMPTS", message: "Nombre maximal de tentatives atteint." });
       return finish(dest, attempt.id, "RETRYABLE_ERROR", { status: "RETRY_WAIT", nextAttemptAt: new Date() }, { code: "NOT_FOUND_AFTER_UNCERTAIN", message: "Publication absente de la plateforme : nouvel envoi." });
@@ -127,6 +139,15 @@ export async function executeDestination(id: string, workerId: string, now = new
 
     const result: PublishResult =
       kind === "poll" && connector.getStatus && dest.remoteId ? await connector.getStatus({ ...ctx, remoteId: dest.remoteId }) : await connector.publish(ctx);
+    if (result.status === "scheduled") {
+      // Programmée chez la plateforme : on vérifiera la publication peu après l'heure prévue.
+      return finish(dest, attempt.id, "PROCESSING", {
+        status: "REMOTE_SCHEDULED",
+        remoteId: result.remoteId,
+        remoteUrl: result.url,
+        nextAttemptAt: new Date(result.publishAt.getTime() + 5 * 60_000),
+      });
+    }
     if (result.status === "published") {
       return finish(dest, attempt.id, "PUBLISHED", { status: "PUBLISHED", remoteId: result.remoteId, remoteUrl: result.url, publishedAt: new Date() });
     }
@@ -140,7 +161,7 @@ export async function executeDestination(id: string, workerId: string, now = new
     const info = { code: err.code, message: err.message, retryAfterMs: err.retryAfterMs };
 
     if (kind === "poll" && err.kind === "retryable") {
-      return finish(dest, attempt.id, "RETRYABLE_ERROR", { status: "PROCESSING", nextAttemptAt: new Date(Date.now() + retryDelayMs(1, err.retryAfterMs)) }, info);
+      return finish(dest, attempt.id, "RETRYABLE_ERROR", { nextAttemptAt: new Date(Date.now() + retryDelayMs(1, err.retryAfterMs)) }, info);
     }
     switch (err.kind) {
       case "retryable": {
@@ -172,7 +193,7 @@ export async function executeDestination(id: string, workerId: string, now = new
  * été publiée. Elle passe en résultat incertain (rapprochement avant toute nouvelle tentative).
  */
 export async function recoverInterrupted(now = new Date()): Promise<number> {
-  const stale = await prisma.destination.findMany({ where: { lockedUntil: { lt: now }, status: { in: ["PUBLISHING", "PROCESSING", "UNCERTAIN"] } } });
+  const stale = await prisma.destination.findMany({ where: { lockedUntil: { lt: now }, status: { in: ["PUBLISHING", "PROCESSING", "REMOTE_SCHEDULED", "UNCERTAIN"] } } });
   for (const dest of stale) {
     await prisma.$transaction(async (tx) => {
       await lockPost(tx, dest.postId);
@@ -218,7 +239,7 @@ export async function applyMissedPolicy(now = new Date()): Promise<number> {
 export function dueDestinations(horizonMs: number, now = new Date()) {
   return prisma.destination.findMany({
     where: {
-      status: { in: ["PENDING", "RETRY_WAIT", "PROCESSING", "UNCERTAIN"] },
+      status: { in: ["PENDING", "RETRY_WAIT", "PROCESSING", "REMOTE_SCHEDULED", "UNCERTAIN"] },
       nextAttemptAt: { lte: new Date(now.getTime() + horizonMs) },
       OR: [{ lockedUntil: null }, { lockedUntil: { lt: now } }],
     },

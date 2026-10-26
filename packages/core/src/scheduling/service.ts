@@ -92,7 +92,8 @@ export async function schedulePost(
     return { ok: false, code: "ACCOUNT_NOT_READY", message: `Publication automatique impossible (mode manuel) : ${notImmediate.map((a) => a.displayName).join(", ")}.` };
   }
 
-  const issues = (await Promise.all(accounts.map(async (a) => ({ accountId: a.id, issues: (await prepareContent(post, a)).issues })))).filter((r) => r.issues.length > 0);
+  const prepared = new Map(await Promise.all(accounts.map(async (a) => [a.id, await prepareContent(post, a)] as const)));
+  const issues = accounts.map((a) => ({ accountId: a.id, issues: prepared.get(a.id)!.issues })).filter((r) => r.issues.length > 0);
   if (issues.length > 0) return { ok: false, code: "INVALID_CONTENT", message: "Le contenu ne respecte pas les limites d'au moins un réseau.", issues };
 
   const destinationIds = await prisma.$transaction(async (tx) => {
@@ -111,7 +112,8 @@ export async function schedulePost(
             contentVersion: post.version,
             authorizedBy: actor,
             scheduledAt,
-            nextAttemptAt: scheduledAt,
+            // Programmation native : envoi immédiat, la plateforme publiera à l'heure prévue (PC éteint possible).
+            nextAttemptAt: getConnector(account.connector).usesNativeScheduling?.(prepared.get(account.id)!.content.options, scheduledAt, now) ? now : scheduledAt,
           },
         }),
       ),
@@ -130,8 +132,9 @@ export async function schedulePost(
  * Annule les destinations pas encore commencées. Si rien n'a été envoyé, la publication redevient
  * un brouillon modifiable ; sinon les destinations déjà traitées restent intactes.
  */
-export async function cancelSchedule(postId: string, actor: string): Promise<{ cancelled: number; backToDraft: boolean }> {
-  return prisma.$transaction(async (tx) => {
+export async function cancelSchedule(postId: string, actor: string): Promise<{ cancelled: number; backToDraft: boolean; remoteErrors: string[] }> {
+  const remoteErrors = await cancelRemoteSchedules(postId, actor);
+  const result = await prisma.$transaction(async (tx) => {
     await lockPost(tx, postId);
     // Condition sur l'état : une destination déjà prise par le worker n'est jamais annulée en cours d'envoi.
     const { count } = await tx.destination.updateMany({
@@ -149,6 +152,49 @@ export async function cancelSchedule(postId: string, actor: string): Promise<{ c
     await audit({ actor, action: "post.cancel_schedule", entity: "post", entityId: postId, meta: { cancelled: count, backToDraft: untouched } }, tx);
     return { cancelled: count, backToDraft: untouched };
   });
+  return { ...result, remoteErrors };
+}
+
+/**
+ * Destinations déjà transmises et programmées chez la plateforme : annulation distante d'abord
+ * (la vidéo reste privée), puis état « Annulée ». En cas d'échec, l'état distant est conservé.
+ */
+async function cancelRemoteSchedules(postId: string, actor: string): Promise<string[]> {
+  const remote = await prisma.destination.findMany({ where: { postId, status: "REMOTE_SCHEDULED", remoteId: { not: null } }, include: { account: true } });
+  if (remote.length === 0) return [];
+  const post = await getPost(postId);
+  const errors: string[] = [];
+  for (const dest of remote) {
+    const connector = getConnector(dest.account.connector);
+    try {
+      if (!connector.cancel || !post) throw new Error("Annulation distante non prise en charge.");
+      const prepared = await prepareContent(post, dest.account);
+      await connector.cancel({
+        destinationId: dest.id,
+        idempotencyKey: dest.idempotencyKey,
+        attempt: dest.attempts,
+        account: dest.account,
+        content: prepared.content,
+        caption: prepared.caption,
+        media: [],
+        remoteId: dest.remoteId!,
+        scheduledAt: dest.scheduledAt,
+        state: dest.connectorState as Record<string, unknown>,
+        saveState: async () => {},
+      });
+      await prisma.$transaction(async (tx) => {
+        await lockPost(tx, postId);
+        await tx.destination.updateMany({
+          where: { id: dest.id, status: "REMOTE_SCHEDULED" },
+          data: { status: "CANCELLED", lastErrorCode: null, lastError: "Programmation annulée sur la plateforme ; le contenu y est conservé en privé." },
+        });
+      });
+      await audit({ actor, action: "destination.remote_cancel", entity: "destination", entityId: dest.id });
+    } catch (error) {
+      errors.push(`${dest.account.displayName} : ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  return errors;
 }
 
 export class DestinationActionError extends Error {}

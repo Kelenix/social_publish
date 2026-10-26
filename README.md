@@ -3,12 +3,12 @@
 Outil personnel pour préparer, programmer et suivre des publications Instagram, TikTok, YouTube, X et
 LinkedIn, depuis une interface web et (à venir) depuis Claude Code via un serveur MCP.
 
-> **État : incrément 3 sur 6.** Disponibles : connexion administrateur, bibliothèque de médias,
+> **État : incrément 4 sur 6.** Disponibles : connexion administrateur, bibliothèque de médias,
 > brouillons avec variantes, aperçu, publication immédiate et programmée, worker, calendrier,
-> historique, **serveur MCP pour Claude Code** (voir `docs/mcp.md`) et un **connecteur de test
-> (simulation)**. Les connecteurs réels arrivent ensuite (voir `docs/plan-de-realisation.md`).
-> **Aucun réseau social réel n'est connecté à ce stade** : seul le connecteur de simulation publie,
-> dans la base locale.
+> historique, **serveur MCP pour Claude Code** (`docs/mcp.md`), **connecteur YouTube**
+> (`docs/youtube.md`) et un **connecteur de test (simulation)**.
+> Le connecteur YouTube est vérifié par des tests de contrat ; il n'a pas encore été essayé contre la
+> vraie API (il faut tes identifiants Google). Instagram, LinkedIn, X et TikTok arrivent ensuite.
 
 ## Prérequis
 
@@ -87,6 +87,7 @@ dont le nom finit par `_test`.
 
 - `docs/plan-de-realisation.md` — plan et incréments
 - `docs/mcp.md` — connexion de Claude Code, dossier inbox, outils, exemples
+- `docs/youtube.md` — créer les identifiants Google et connecter une chaîne
 - `docs/integrations.md` — sources officielles vérifiées et limites
 - `DECISION_LOG.md` — choix techniques
 - `PROJECT_STATE.md` — avancement

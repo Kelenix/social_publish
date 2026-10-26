@@ -61,11 +61,10 @@ export async function cancelScheduleAction(postId: string): Promise<{ message: s
   const user = await requireUser();
   const result = await cancelSchedule(z.uuid().parse(postId), user.email);
   revalidateAll();
-  return {
-    message: result.backToDraft
-      ? "Programmation annulée : la publication est de nouveau un brouillon."
-      : `${result.cancelled} destination(s) annulée(s) ; celles déjà traitées sont conservées.`,
-  };
+  const message = result.backToDraft
+    ? "Programmation annulée : la publication est de nouveau un brouillon."
+    : `${result.cancelled} destination(s) annulée(s) ; celles déjà traitées sont conservées.`;
+  return { message: result.remoteErrors.length > 0 ? `${message} Échec de l'annulation sur la plateforme : ${result.remoteErrors.join(" ; ")}` : message };
 }
 
 async function destinationAction(run: () => Promise<void>): Promise<{ error?: string }> {
