@@ -8,7 +8,7 @@ import { SIMULATION_SCENARIOS } from "@app/core/connectors/scenarios";
 import { saveDraftAction } from "@/app/(app)/publications/actions";
 import { SchedulePanel, type AccountOption } from "@/components/schedule-panel";
 import { YouTubeOptions } from "@/components/youtube-options";
-import { InstagramOptions, LinkedInOptions } from "@/components/platform-options";
+import { FacebookOptions, InstagramOptions, LinkedInOptions } from "@/components/platform-options";
 import { MediaPicker } from "@/components/media-picker";
 import { MediaThumb } from "@/components/media-grid";
 import { Badge } from "@/components/ui/badge";
@@ -203,6 +203,7 @@ export function PostEditor({ postId, version, initial, library, timezones, edita
                   );
                 })}
                 {activeTab === "LINKEDIN" && <LinkedInOptions options={variants.LINKEDIN.options} onChange={(options) => updateVariant("LINKEDIN", { options })} />}
+                {activeTab === "FACEBOOK" && <FacebookOptions options={variants.FACEBOOK.options} onChange={(options) => updateVariant("FACEBOOK", { options })} />}
                 {activeTab === "INSTAGRAM" && <InstagramOptions options={variants.INSTAGRAM.options} onChange={(options) => updateVariant("INSTAGRAM", { options })} />}
                 {activeTab === "YOUTUBE" && <YouTubeOptions options={variants.YOUTUBE.options} onChange={(options) => updateVariant("YOUTUBE", { options })} />}
                 {activeTab === "TEST" && (

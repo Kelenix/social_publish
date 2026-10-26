@@ -4,6 +4,24 @@
 
 ---
 
+## ADR-016 — Connecteur Facebook (Pages), hors cahier des charges initial
+
+- **Date** : 2026-10-26
+- **Statut** : Accepté (demande explicite de l'utilisateur)
+- **Décideur** : Claude (backend + security-engineer)
+- **Contexte** : Facebook ne figurait pas dans l'INTAKE ; l'utilisateur l'a demandé après la livraison.
+- **Décision** :
+  - Publication sur des **Pages** uniquement (l'API ne publie pas sur un profil) ; un compte par Page autorisée, « Permission manquante » si la tâche `CREATE_CONTENT` manque.
+  - Jeton utilisateur longue durée → jetons de Page sans expiration, chiffrés ; le jeton utilisateur (≈ 60 j) sert seulement à l'upload vidéo reprenable.
+  - Photos envoyées non publiées puis rattachées (`attached_media`) : une seule logique pour 1 ou plusieurs photos.
+  - Programmation native 15 min à 29 jours (marges sur la plage documentée 10 min – 30 j) ; annulation = suppression de la publication programmée (non visible), contenu conservé dans le Studio.
+  - Champs texte envoyés en `x-www-form-urlencoded` : le multipart convertit les sauts de ligne en `\r\n` (défaut détecté par les tests).
+  - Rapprochement : post immédiat retrouvé par texte identique dans le fil ; vidéo ou post programmé → décision manuelle.
+- **Alternatives écartées** : `file_url` pour les vidéos (exigerait une URL publique HTTPS) ; dépublication au lieu de suppression (pas d'opération documentée pour un post programmé).
+- **Impact** : métier (moyen)
+
+---
+
 ## ADR-015 — Vérification finale : E2E, CI, CSP, sauvegardes, réinitialisation de l'administrateur
 
 - **Date** : 2026-10-26

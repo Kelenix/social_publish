@@ -31,6 +31,7 @@ Chiffres à la livraison : 170 tests Vitest (unitaires, intégration PostgreSQL/
 |--------|-----------|---------------------------|---------------------------|
 | YouTube | Oui (upload reprenable, suivi, programmation native, annulation) | **Oui, le 26/10** : connexion OAuth (PKCE accepté), puis publication réelle d'une vidéo (upload → traitement → publiée, 1 tentative). Programmation native et annulation pas encore essayées en réel. | — |
 | Instagram | Oui (images JPEG, carrousels, Reels) | Non | Application Meta, compte professionnel, URL publique HTTPS (tunnel) |
+| Facebook (Page) — ajouté à ta demande | Oui (texte, photos, vidéo, programmation native, annulation) | Non | Application Meta + Facebook Login, `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` |
 | LinkedIn | Oui (profil ; pages si accordées) | Non | Application LinkedIn, produits Share on LinkedIn + Sign In |
 | X | Oui (texte, 4 images ou 1 vidéo) | Non | Application X, crédits API approvisionnés |
 | TikTok | Mode manuel (export) + interface d'adaptateur | Sans objet | Publier depuis l'application TikTok |
@@ -45,6 +46,7 @@ détecter.
 
 - YouTube : fait (clés renseignées, chaîne connectée, publication réelle réussie).
 - Instagram : `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET`, `PUBLIC_BASE_URL` (HTTPS public).
+- Facebook : `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET`.
 - LinkedIn : `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`.
 - X : `X_CLIENT_ID`, `X_CLIENT_SECRET` + crédits.
 - Claude Code : un jeton créé dans Réglages, puis `claude mcp add …` (voir `docs/mcp.md`).
@@ -55,6 +57,7 @@ détecter.
 |--------|-------------|
 | YouTube au-delà de 7 jours sans reconnexion | Passer l'application Google en production (vérification possible par Google) |
 | Instagram pour d'autres comptes que les testeurs | App Review de Meta |
+| Facebook pour des Pages de personnes sans rôle sur l'application | App Review de Meta |
 | LinkedIn : publier pour une page d'entreprise | Produit Community Management API (validation LinkedIn) |
 | TikTok : publication directe visible publiquement | Audit de l'application par TikTok |
 | X | Pas d'approbation, mais accès facturé à l'usage |

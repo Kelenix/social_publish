@@ -31,3 +31,18 @@ export function InstagramOptions({ options, onChange }: Props) {
     </label>
   );
 }
+
+export function FacebookOptions({ options, onChange }: Props) {
+  return (
+    <label className="flex items-start gap-2 text-sm">
+      <input
+        type="checkbox"
+        name="fb-native"
+        checked={options.nativeScheduling !== false}
+        onChange={(e) => onChange({ ...options, nativeScheduling: e.target.checked })}
+        className="mt-1 accent-[var(--accent-strong)]"
+      />
+      <span>Programmation native : Facebook publie lui-même à l&apos;heure prévue (de 15 min à 29 jours), même ordinateur éteint.</span>
+    </label>
+  );
+}

@@ -1,7 +1,7 @@
 # Studio de publication
 
 Outil personnel pour préparer, programmer et suivre des publications sur **YouTube, Instagram,
-LinkedIn, X et TikTok**, depuis une interface web ou depuis **Claude Code** (serveur MCP).
+Facebook (Pages), LinkedIn, X et TikTok**, depuis une interface web ou depuis **Claude Code** (serveur MCP).
 Il tourne en local avec Docker Desktop et peut ensuite être déplacé sur un VPS.
 
 Ce que tu peux faire :
@@ -50,7 +50,7 @@ Modifier `.env` sans cette commande n'a aucun effet sur un compte existant.
 ## Connecter les réseaux
 
 - YouTube : [docs/youtube.md](docs/youtube.md)
-- Instagram, LinkedIn, X, TikTok (mode manuel), URL publique HTTPS : [docs/connecteurs.md](docs/connecteurs.md)
+- Instagram, Facebook, LinkedIn, X, TikTok (mode manuel), URL publique HTTPS : [docs/connecteurs.md](docs/connecteurs.md)
 - Claude Code (MCP) : [docs/mcp.md](docs/mcp.md)
 
 Pour essayer sans aucun réseau : **Comptes → Ajouter un compte de test** (connecteur de
@@ -59,8 +59,8 @@ simulation, toujours signalé comme tel, rien ne sort de ta machine).
 ## Programmation : ce qu'il faut savoir
 
 - **En local, les publications ne partent que si l'ordinateur est allumé, connecté, hors veille,
-  avec Docker actif.** Exception : la programmation native de YouTube (vidéo publique), publiée par
-  YouTube lui-même.
+  avec Docker actif.** Exception : la programmation native de YouTube (vidéo publique) et de
+  Facebook, publiée par la plateforme elle-même.
 - Programmer ou publier vaut **autorisation** pour la version enregistrée, ces comptes et cette
   date. Pour modifier ensuite : annuler (la publication redevient un brouillon) puis reprogrammer.
 - Publication manquée pendant un arrêt : règle des **Réglages** (par défaut : te demander).

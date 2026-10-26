@@ -15,6 +15,7 @@
 | M12 | LinkedIn : application + produits Share on LinkedIn et Sign In (OpenID), URL de retour ; Community Management API seulement pour les pages | Connecteur LinkedIn | ⬜ |
 | M13 | X : application OAuth 2.0 (Web App), URL de retour, **crédits API** approvisionnés | Connecteur X | ⬜ |
 | M14 | Premier test réel par réseau (contenu de test, de préférence peu visible) et retour sur ce qui a fonctionné | Valider les connecteurs contre les vraies API | ⬜ |
+| M18 | Facebook : application Meta avec Facebook Login, URL de retour, `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET`, puis connexion de ta Page (procédure : `docs/connecteurs.md`) et premier essai | Connecteur Facebook | ⬜ |
 | M10 ✅ | Premier envoi réel YouTube d'une **vidéo** en visibilité **privée** (la connexion OAuth est déjà validée), puis me dire le résultat | Valider l'envoi contre la vraie API | ✅ réussi le 26/10 |
 | M15 | Identifiants de connexion : `ADMIN_EMAIL` / `ADMIN_INITIAL_PASSWORD` ont été modifiés dans `.env` après la création du compte, sans effet. Pour les appliquer : mot de passe d'au moins 12 caractères, puis `docker compose run --rm migrate pnpm admin:reset` | Se connecter avec tes propres identifiants | ⬜ |
 | M16 | Créer un dépôt GitHub et y pousser le projet pour activer la CI | Pipeline CI | ⬜ |

@@ -75,6 +75,7 @@ enum Platform {
   YOUTUBE
   X
   LINKEDIN
+  FACEBOOK
   /// Connecteur de simulation : n'est jamais un réseau réel.
   TEST
 }

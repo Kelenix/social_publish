@@ -83,6 +83,32 @@ https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/refe
 - Choix : `media_type=REELS` pour une vidéo seule, `VIDEO` pour un élément de carrousel (la doc est
   incohérente sur ce point).
 
+## Facebook (Pages) — vérifié le 2026-10-26
+
+Sources : https://developers.facebook.com/docs/pages-api/posts ·
+https://developers.facebook.com/docs/pages-api/getting-started ·
+https://developers.facebook.com/docs/graph-api/reference/page/photos ·
+https://developers.facebook.com/docs/graph-api/reference/page/videos ·
+https://developers.facebook.com/docs/video-api/guides/publishing ·
+https://developers.facebook.com/docs/facebook-login/guides/access-tokens/get-long-lived
+
+- Publication : `POST /{page_id}/feed` (`message`, `published`, `scheduled_publish_time`) avec un jeton
+  de Page ; tâches `CREATE_CONTENT` (+ `MANAGE`, `MODERATE` d'après la page Posts). Exemples en `v26.0`.
+- Programmation : « between 10 minutes and 30 days from the time of the API request » (posts) ;
+  10 min à 6 mois pour les vidéos.
+- Photos : multipart ou `url`, `published=false` puis `attached_media[n]={"media_fbid":…}` sur
+  `/feed` ; `temporary=true` pour un post programmé ; JPEG, BMP, PNG, GIF, TIFF, 4 Mo maximum.
+- Vidéo : session `POST /{app_id}/uploads` (jeton utilisateur), envoi `POST /upload:<id>` avec
+  `file_offset` (reprise via `GET`), puis `POST graph-video…/{page_id}/videos` avec
+  `fbuploader_video_file_chunk`.
+- Jetons : utilisateur longue durée ≈ 60 jours (`fb_exchange_token`) ; jetons de Page obtenus avec
+  lui « do not have an expiration date » (sauf conditions particulières).
+- Suppression : `DELETE /{post_id}` (posts créés par l'application).
+- Non documenté sur ces pages, choix du Studio : vérification de mise en ligne par le champ
+  `is_published` (un champ absent fait foi de la création) ; limite de texte 63 206 caractères
+  (valeur usuelle) ; rapprochement d'un post immédiat par recherche du même texte dans le fil.
+- Non testé contre la vraie API.
+
 ## LinkedIn — vérifié le 2026-10-26
 
 Sources : https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api ·
@@ -138,6 +164,7 @@ Source : https://developers.tiktok.com/doc/content-posting-api-get-started
 |------------|------|-----------|
 | YouTube | Implémenté ; publication réelle vérifiée le 26/10 | 4 |
 | Instagram | Implémenté ; test réel en attente (identifiants + URL publique) | 5 |
+| Facebook (Page) | Implémenté ; test réel en attente (identifiants) | ajout hors cahier des charges |
 | LinkedIn | Implémenté ; test réel en attente (identifiants) | 5 |
 | X | Implémenté ; test réel en attente (identifiants + crédits) | 5 |
 | TikTok | Mode manuel (export) ; adaptateur prévu, non implémenté | 5 |

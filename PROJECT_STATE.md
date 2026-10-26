@@ -50,6 +50,8 @@
 
 ## Journal de session
 
+- 2026-10-26 — Inc-6 commité (`6cd4c4f`). Connecteur Facebook (Pages) ajouté à la demande de l'utilisateur, sur `feat/facebook` (non commité) : doc Meta vérifiée, OAuth + jetons de Page chiffrés, texte/photos/vidéo, programmation native + annulation, rapprochement. Vérifié : 179 tests dont 9 de contrat Facebook (défaut trouvé et corrigé : sauts de ligne en multipart), stack Docker healthy, page Comptes. Non vérifié : vraie API Facebook.
+
 - 2026-10-26 — Publication réelle YouTube réussie par l'utilisateur (PROCESSING → PUBLISHED, 1 tentative). Demande : Facebook (hors INTAKE) — question posée avant tout développement.
 
 - 2026-10-26 — Inc-5 commité (`cfbcf0b`). Inc-6 sur `feat/inc-6-verification` (non commité) : revue sécurité (audit dépendances OK, aucun TODO/secret), CSP de production, contrôle d'origine robuste, E2E Playwright (2/2 sur le stack Docker), CI GitHub Actions (non exécutée : pas de dépôt distant), sauvegarde + restauration à blanc vérifiées, `admin:reset`, message clair sur les médias refusés, docs (README, exploitation/VPS, bilan, CHANGELOG). Constats : connexion OAuth YouTube réelle réussie par l'utilisateur (PKCE accepté) ; `ADMIN_EMAIL`/`ADMIN_INITIAL_PASSWORD` modifiés dans `.env` sans effet (M15) ; écart INTAKE identifié : modèles de workflow (§3/§6) non implémentés.

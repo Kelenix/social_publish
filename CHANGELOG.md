@@ -2,6 +2,12 @@
 
 Format inspiré de « Keep a Changelog » ; versions SemVer.
 
+## [0.7.0] — 2026-10-26 — Connecteur Facebook (Pages)
+
+- Publication sur les Pages Facebook gérées : texte, photos (une ou plusieurs), vidéo par upload reprenable.
+- Programmation native (10 min – 30 jours) et annulation ; vérification de la mise en ligne.
+- Rapprochement d'un post immédiat dont la réponse s'est perdue.
+
 ## [0.6.0] — 2026-10-26 — Vérification complète
 
 - Tests de bout en bout Playwright (connexion, import, brouillon, publication par le worker, historique, calendrier).

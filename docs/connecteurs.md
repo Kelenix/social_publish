@@ -1,4 +1,4 @@
-# Configurer Instagram, LinkedIn, X et TikTok
+# Configurer Instagram, Facebook, LinkedIn, X et TikTok
 
 > YouTube : voir `docs/youtube.md`. Sources officielles et date de vérification : `docs/integrations.md`.
 > Les consoles développeur changent souvent : si un libellé diffère, cherche l'équivalent.
@@ -50,6 +50,35 @@ Business ou Créateur — sans page Facebook).
 Limites appliquées : images **JPEG** seulement (ratio 4:5 à 1.91:1, 8 Mo), vidéo seule = **Reel**
 (MP4/MOV, 3 s à 15 min, 300 Mo), carrousel jusqu'à 20 médias, légende 2200 caractères et 30
 hashtags. Autorisation de 60 jours prolongée automatiquement tant qu'elle sert.
+
+## Facebook (Page)
+
+L'API permet de publier sur une **Page** dont tu es administrateur ou éditeur, pas sur un profil
+personnel.
+
+1. https://developers.facebook.com/apps → créer une application (cas d'usage « gérer tout sur ta
+   Page » ou type « Entreprise »). L'application créée pour Instagram peut convenir si elle propose
+   aussi Facebook Login.
+2. Ajouter **Facebook Login for Business** (ou Facebook Login) ; dans ses réglages, **URI de
+   redirection OAuth valides** : l'URL affichée dans Comptes
+   (`http://localhost:3000/api/oauth/facebook/callback` en local). Si Meta refuse `http://`, ouvre
+   le Studio par ton adresse HTTPS publique et mets `APP_URL=PUBLIC_BASE_URL`.
+3. Autorisations demandées : `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`. Tant
+   que tu as un rôle sur l'application, aucune vérification par Meta n'est nécessaire pour tes
+   propres Pages.
+4. **Paramètres → Général** : copier l'ID et la clé secrète de l'application dans `.env`
+   (`FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET`), puis **Comptes → Connecter un compte Facebook** et
+   sélectionner la ou les Pages.
+
+Comportement :
+- chaque Page autorisée devient un compte ; une Page sur laquelle ton rôle ne permet pas de publier
+  est signalée « Permission manquante » ;
+- texte, photos (JPEG/PNG, 4 Mo chacune, plusieurs possibles) ou une vidéo MP4 seule ;
+- **programmation native** de 10 min à 30 jours (désactivable dans la variante) : Facebook publie
+  à l'heure prévue même ordinateur éteint ; annuler supprime la publication programmée côté Facebook
+  (elle n'était pas encore visible) ;
+- jeton de Page sans date d'expiration ; l'envoi de vidéos utilise ton autorisation personnelle
+  (environ 60 jours), à renouveler par « Reconnecter ».
 
 ## LinkedIn
 

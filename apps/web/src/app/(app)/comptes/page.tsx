@@ -26,6 +26,7 @@ const STATE: Record<ConnectorState, { label: string; tone: "neutral" | "success"
 const SETUP: Record<string, string> = {
   youtube: "YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET et TOKEN_ENCRYPTION_KEY dans .env (procédure : docs/youtube.md)",
   instagram: "INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET, TOKEN_ENCRYPTION_KEY, ainsi que PUBLIC_BASE_URL (HTTPS public) et MEDIA_URL_SIGNING_KEY (procédure : docs/connecteurs.md)",
+  facebook: "FACEBOOK_APP_ID, FACEBOOK_APP_SECRET et TOKEN_ENCRYPTION_KEY (procédure : docs/connecteurs.md)",
   linkedin: "LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET et TOKEN_ENCRYPTION_KEY (procédure : docs/connecteurs.md)",
   x: "X_CLIENT_ID, X_CLIENT_SECRET et TOKEN_ENCRYPTION_KEY (procédure : docs/connecteurs.md)",
 };

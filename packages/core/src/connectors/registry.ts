@@ -1,4 +1,5 @@
 import type { ConnectedAccount, Platform } from "@app/db";
+import { facebookConnector } from "./facebook";
 import { instagramConnector } from "./instagram";
 import { linkedinConnector } from "./linkedin";
 import { testConnector } from "./test-connector";
@@ -7,7 +8,7 @@ import { xConnector } from "./x";
 import { youtubeConnector } from "./youtube";
 import type { Connector, ConnectorState } from "./types";
 
-const CONNECTORS: Connector[] = [instagramConnector, tiktokConnector, youtubeConnector, xConnector, linkedinConnector, testConnector];
+const CONNECTORS: Connector[] = [instagramConnector, facebookConnector, tiktokConnector, youtubeConnector, xConnector, linkedinConnector, testConnector];
 
 export function listConnectors(): Connector[] {
   return CONNECTORS;
